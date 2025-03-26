@@ -102,10 +102,19 @@ export default function AboutPage() {
             </span>
           </h1>
           <p className="text-xl text-gray-100 max-w-3xl mx-auto">
-            BQI Tech is a Software Development and Technology Professional Services firm dedicated to helping government agencies adopt and integrate innovative technology solutions.
-          </p>
+          BQI Tech is a leading software development and IT consulting firm specializing in custom technology solutions for government agencies and businesses. We combine cutting-edge innovation, security-first approaches, and enterprise-level expertise to help organizations streamline operations, modernize legacy systems, and enhance digital transformation.          </p>
         </div>
       </motion.section>
+
+    
+
+      {/* Our Mission Section */}
+      <section className="mb-16">
+        <h2 className="text-3xl font-semibold mb-6">Our Mission</h2>
+        <p className="text-lg text-gray-700">
+          We empower organizations with tailor-made technology solutions designed to improve efficiency, security, and scalability. Our mission is to bridge the gap between technology and government operations, ensuring that agencies can deliver better public services through digital innovation.
+        </p>
+      </section>
 
       {/* Expertise Section */}
       <motion.section className="mb-24">
