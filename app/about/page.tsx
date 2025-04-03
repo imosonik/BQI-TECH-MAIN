@@ -9,24 +9,24 @@ import { useRouter } from 'next/navigation'
 const expertise = [
   { 
     icon: Code, 
-    title: 'Software Development', 
-    description: 'Custom solutions tailored to your needs, including web applications, mobile solutions, and enterprise systems. Our development process follows federal security standards and best practices.',
+    title: 'Custom Software Development', 
+    description: 'We design and develop high-performance, scalable software solutions tailored to meet the unique needs of government agencies and enterprises.',
     features: [
-      'Custom Application Development',
-      'Legacy System Modernization',
-      'Cloud-Native Solutions',
-      'API Development & Integration'
+      'Web & Mobile Application Development - Secure, responsive, and user-friendly digital solutions.',
+      'Legacy System Modernization - Transform outdated systems into modern, cloud-based platforms.',
+      'Cloud-Native Solutions - Scalable, secure cloud applications to improve operational efficiency.',
+      'API Development & Integration - Seamless data connectivity between systems.'
     ]
   },
   { 
     icon: Lightbulb, 
-    title: 'Configuration Services', 
-    description: 'Expert configuration and customization of enterprise platforms and government systems. We optimize your technology infrastructure for maximum efficiency and performance.',
+    title: 'Enterprise Platform & IT Consulting', 
+    description: 'We provide comprehensive IT consulting and enterprise platform optimization services to help organizations implement and manage large-scale systems.',
     features: [
-      'Enterprise Platform Setup',
-      'System Optimization',
-      'Workflow Automation',
-      'Performance Tuning'
+      'Enterprise Platform Setup - Full-scale implementation and configuration for government IT solutions.',
+      'System Optimization & Performance Tuning - Enhancing speed, security, and efficiency.',
+      'Workflow Automation - Streamlining processes with AI-powered automation.',
+      'Custom Configuration Services - Tailored adjustments to maximize your system\'s capabilities.'
     ]
   },
 ]
@@ -202,10 +202,12 @@ export default function AboutPage() {
         className="bg-gradient-to-r from-teal-500 to-blue-600 text-white py-16 px-4 rounded-lg"
       >
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-semibold mb-4">Our Commitment</h2>
+          <h2 className="text-3xl font-semibold mb-4">Our Commitment to Innovation</h2>
           <p className="text-lg mb-6">
-            At BQI Tech, we are committed to delivering practical, secure, and sustainable solutions that empower government agencies to serve their communities better.
-          </p>
+          We are actively engaged in technology conferences, government innovation forums, and research
+initiatives to stay at the forefront of public sector technology advancements. By continuously adapting to
+emerging trends, we help clients future-proof their IT infrastructure and stay ahead in an evolving digital
+landscapе  </p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
