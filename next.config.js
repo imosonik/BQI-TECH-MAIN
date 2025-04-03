@@ -6,6 +6,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
+  swcMinify: true,
   images: {
     domains: [
       'upload.wikimedia.org',
@@ -54,8 +55,8 @@ const nextConfig = {
           },
           {
             key: 'X-Robots-Tag',
-            value: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
-          }
+            value: 'index, follow',
+          },
         ]
       }
     ]

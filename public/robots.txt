@@ -1,5 +1,8 @@
+# Allow all web crawlers
 User-agent: *
 Allow: /
+
+# Sitemap location
 Sitemap: https://bqitech.com/sitemap.xml
 
 # Allow all bots to index the site
