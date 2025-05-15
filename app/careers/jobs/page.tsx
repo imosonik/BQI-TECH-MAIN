@@ -22,7 +22,7 @@ export default function JobsPage() {
   const { isSignedIn } = useUser();
 
   const {
-    data: jobs,
+    data: jobs = [],
     isLoading,
     error,
   } = useQuery<JobPosting[]>({
@@ -31,24 +31,20 @@ export default function JobsPage() {
   });
 
   const uniqueLocations = Array.from(
-    new Set(jobs?.map((job) => job.location) || [])
+    new Set(jobs.map((job) => job.location))
   );
   const uniqueDepartments = Array.from(
-    new Set(jobs?.map((job) => job.department).filter(Boolean) || [])
+    new Set(jobs.map((job) => job.department).filter(Boolean))
   );
 
-  const filteredJobs = jobs?.filter((job) => {
+  const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (job.department?.toLowerCase() || "").includes(
-        searchTerm.toLowerCase()
-      ) ||
+      (job.department?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       job.location.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesLocation =
-      !selectedLocation || job.location === selectedLocation;
-    const matchesDepartment =
-      !selectedDepartment || job.department === selectedDepartment;
+    const matchesLocation = !selectedLocation || job.location === selectedLocation;
+    const matchesDepartment = !selectedDepartment || job.department === selectedDepartment;
 
     return matchesSearch && matchesLocation && matchesDepartment;
   });
@@ -179,12 +175,12 @@ export default function JobsPage() {
           >
             <div className="mb-6">
               <h2 className="text-lg font-medium">
-                {filteredJobs?.length || 0} JOBS FOUND
+                {filteredJobs.length || 0} JOBS FOUND
               </h2>
             </div>
 
             <div className="space-y-4">
-              {filteredJobs?.map((job) => (
+              {filteredJobs.map((job) => (
                 <motion.div
                   key={job.id}
                   className={`p-6 border rounded-lg cursor-pointer transition-all
