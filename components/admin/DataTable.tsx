@@ -17,6 +17,7 @@ interface Column {
 interface DataTableProps {
   columns: Column[];
   data: any[];
+  actionButtons?: (row: any) => React.ReactNode;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -32,7 +33,8 @@ export default function DataTable({
   onEdit, 
   onDelete, 
   onApply, 
-  onStatusChange 
+  onStatusChange,
+  actionButtons
 }: DataTableProps) {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
@@ -136,8 +138,8 @@ export default function DataTable({
         <tbody className="text-gray-600 text-sm font-light">
           {data.map((row, rowIndex) => (
             <motion.tr
-              key={rowIndex}
-              className="border-b border-gray-200 hover:bg-gray-100"
+              key={row.id}
+              className="border-b border-gray-200 hover:bg-gray-50"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: rowIndex * 0.05 }}
@@ -162,48 +164,52 @@ export default function DataTable({
                 </td>
               ))}
               <td className="py-3 px-6 text-center">
-                <div className="flex item-center justify-center">
-                  {onView && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => onView(row.id)}
-                      className="w-4 mr-2 transform hover:text-purple-500 hover:scale-110"
-                    >
-                      <Eye size={16} />
-                    </motion.button>
-                  )}
-                  {onEdit && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => onEdit(row.id)}
-                      className="w-4 mr-2 transform hover:text-blue-500 hover:scale-110"
-                    >
-                      <Edit size={16} />
-                    </motion.button>
-                  )}
-                  {onDelete && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => onDelete(row.id)}
-                      className="w-4 mr-2 transform hover:text-red-500 hover:scale-110"
-                    >
-                      <Trash2 size={16} />
-                    </motion.button>
-                  )}
-                  {onApply && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => onApply(row.id)}
-                      className="w-4 mr-2 transform hover:text-green-500 hover:scale-110"
-                    >
-                      Apply
-                    </motion.button>
-                  )}
-                </div>
+                {actionButtons ? (
+                  actionButtons(row)
+                ) : (
+                  <div className="flex items-center justify-center">
+                    {onView && (
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => onView(row.id)}
+                        className="w-4 mr-2 transform hover:text-purple-500 hover:scale-110"
+                      >
+                        <Eye size={16} />
+                      </motion.button>
+                    )}
+                    {onEdit && (
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => onEdit(row.id)}
+                        className="w-4 mr-2 transform hover:text-blue-500 hover:scale-110"
+                      >
+                        <Edit size={16} />
+                      </motion.button>
+                    )}
+                    {onDelete && (
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => onDelete(row.id)}
+                        className="w-4 mr-2 transform hover:text-red-500 hover:scale-110"
+                      >
+                        <Trash2 size={16} />
+                      </motion.button>
+                    )}
+                    {onApply && (
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => onApply(row.id)}
+                        className="w-4 mr-2 transform hover:text-green-500 hover:scale-110"
+                      >
+                        Apply
+                      </motion.button>
+                    )}
+                  </div>
+                )}
               </td>
             </motion.tr>
           ))}

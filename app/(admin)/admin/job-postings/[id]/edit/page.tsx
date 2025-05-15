@@ -23,17 +23,18 @@ export default function EditJobPostingPage() {
   useEffect(() => {
     async function fetchJobPosting() {
       if (id === "new") {
-        setJobPosting({
+        const initialJobPosting: JobPosting = {
           id: "",
           title: "",
           department: "",
           location: "",
           description: "",
           postedDate: new Date().toISOString(),
-          type: "Full-time",
-          employmentType: "",
+          employmentType: "Full-time",
           category: "",
-        });
+          isActive: true,
+        };
+        setJobPosting(initialJobPosting);
         return;
       }
 
