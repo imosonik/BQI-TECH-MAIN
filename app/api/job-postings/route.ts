@@ -6,7 +6,12 @@ const prisma = new PrismaClient();
 export async function GET() {
   try {
     const jobPostings = await prisma.jobPosting.findMany({
-      orderBy: { postedDate: 'desc' },
+      where: {
+        isActive: true
+      },
+      orderBy: {
+        postedDate: 'desc'
+      },
       select: {
         title: true,
         department: true,
