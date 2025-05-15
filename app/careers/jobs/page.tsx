@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Clock, ChevronDown, X, Building2, Briefcase } from "lucide-react";
+import { Search, MapPin, Clock, ChevronDown, X, Building2, Briefcase, ArrowRight } from "lucide-react";
 import { JobPosting } from "@/types/jobPosting";
 import Loader from "@/components/Loader";
 import { SafeHtml } from "@/components/ui/safe-html";
@@ -14,29 +14,54 @@ import { useUser } from "@clerk/nextjs";
 const JobCard = ({ job, isSelected, onClick }: { job: JobPosting; isSelected: boolean; onClick: () => void }) => (
   <motion.div
     onClick={onClick}
-    className={`p-6 rounded-xl transition-all cursor-pointer ${
+    className={`p-6 rounded-xl transition-all cursor-pointer w-full ${
       isSelected ? 'bg-blue-50 border-blue-500' : 'bg-white hover:bg-gray-50'
     } border shadow-sm hover:shadow-md`}
     whileHover={{ scale: 1.01 }}
     whileTap={{ scale: 0.99 }}
   >
-    <div className="flex justify-between items-start">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
-        <div className="flex flex-wrap gap-3 mb-4">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-            <MapPin className="w-4 h-4 mr-1" />
-            {job.location}
-          </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
-            <Clock className="w-4 h-4 mr-1" />
-            {job.employmentType}
-          </span>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+        <div className="flex-1">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{job.title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{job.department}</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+          <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+          {new Date(job.postedDate).toLocaleDateString()}
         </div>
       </div>
-      <span className="text-sm text-gray-500">
-        {new Date(job.postedDate).toLocaleDateString()}
-      </span>
+      
+      <p className="text-sm text-gray-600 line-clamp-2">
+        {job.description.replace(/<[^>]*>|&nbsp;/g, ' ').trim().slice(0, 150)}...
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2 mt-1">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+          <MapPin className="w-3 h-3 mr-1" />
+          {job.location}
+        </span>
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+          <Briefcase className="w-3 h-3 mr-1" />
+          {job.employmentType}
+        </span>
+        {job.salary && (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+            {job.salary.currency} {job.salary.min.toLocaleString()} - {job.salary.max.toLocaleString()}
+          </span>
+        )}
+      </div>
+
+      <div className="flex justify-end mt-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+        >
+          View Details
+          <ArrowRight className="w-4 h-4 ml-1" />
+        </Button>
+      </div>
     </div>
   </motion.div>
 );
@@ -252,35 +277,34 @@ export default function JobsPage() {
         </div>
 
         {/* Job Listings Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-blue-500" />
-              {filteredJobs.length} Available Positions
-            </h2>
-            <div className="space-y-4">
-              {filteredJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  isSelected={selectedJob?.id === job.id}
-                  onClick={() => setSelectedJob(job)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Job Details Section */}
-          <AnimatePresence mode="wait">
-            {selectedJob && (
-              <JobDetailsModal
-                job={selectedJob}
-                onClose={() => setSelectedJob(null)}
-                onApply={() => handleApply(selectedJob.id)}
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-blue-500" />
+            {filteredJobs.length} Available Positions
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-7xl mx-auto">
+            {filteredJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                isSelected={selectedJob?.id === job.id}
+                onClick={() => setSelectedJob(job)}
               />
-            )}
-          </AnimatePresence>
+            ))}
+          </div>
         </div>
+
+        {/* Job Details Modal */}
+        <AnimatePresence>
+          {selectedJob && (
+            <JobDetailsModal
+              job={selectedJob}
+              onClose={() => setSelectedJob(null)}
+              onApply={() => handleApply(selectedJob.id)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
