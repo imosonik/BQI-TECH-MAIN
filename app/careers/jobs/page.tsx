@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Clock, ChevronDown, X, Building2, Briefcase } from "lucide-react";
+import { Search, MapPin, Clock, ChevronDown, X } from "lucide-react";
 import { JobPosting } from "@/types/jobPosting";
 import Loader from "@/components/Loader";
 import { SafeHtml } from "@/components/ui/safe-html";
@@ -208,87 +208,134 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 py-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-white mb-6">Join Our Team</h1>
-          <div className="max-w-3xl">
-            <div className="bg-white rounded-xl shadow-lg p-2 flex items-center">
-              <Search className="w-5 h-5 text-gray-400 ml-3" />
-              <input
-                type="text"
-                placeholder="Search for jobs, departments, or locations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 px-4 py-3 focus:outline-none text-gray-700"
-              />
-            </div>
-          </div>
+    <div className="min-h-screen bg-white -mt-[60px]">
+      <div className="bg-gradient-to-r from-[#272055] to-[#1D1840] text-white py-12 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+            Open Positions
+          </h1>
+          <p className="text-lg text-gray-200 max-w-2xl">
+          Join a team where innovation meets impact and shape the
+           future of technology!
+          </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Filters Section */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <Button
-            variant="outline"
-            onClick={() => setIsLocationOpen(!isLocationOpen)}
-            className="relative group hover:border-blue-500"
-          >
-            <MapPin className="w-4 h-4 mr-2 text-blue-500" />
-            <span>{selectedLocation || "All Locations"}</span>
-            <ChevronDown className="w-4 h-4 ml-2 group-hover:text-blue-500" />
-            {isLocationOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
-              >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {/* Search Section */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search for jobs or keywords"
+                className="w-full pl-12 pr-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button className="w-full sm:w-auto px-8 py-3 bg-[#272055] hover:bg-[#272055]/90 text-white rounded-md">
+              Search
+            </Button>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <div className="flex flex-wrap gap-4">
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLocationOpen(!isLocationOpen)}
+                  className="flex items-center gap-2"
+                >
+                  <MapPin className="w-4 h-4" />
+                  {selectedLocation || "All Locations"}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+                {isLocationOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute z-10 mt-2 w-48 bg-white rounded-xl shadow-lg border"
+                  >
+                    {uniqueLocations.map((location) => (
+                      <button
+                        key={location}
+                        onClick={() => {
+                          setSelectedLocation(location);
+                          setIsLocationOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50"
+                      >
+                        {location}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDepartmentOpen(!isDepartmentOpen)}
+                  className="flex items-center gap-2"
+                >
+                  {selectedDepartment || "All Departments"}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+                {isDepartmentOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute z-10 mt-2 w-48 bg-white rounded-xl shadow-lg border"
+                  >
+                    {uniqueDepartments.map((department) => (
+                      <button
+                        key={department}
+                        onClick={() => {
+                          setSelectedDepartment(department || "");
+                          setIsDepartmentOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50"
+                      >
+                        {department}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+
+              {(selectedLocation || selectedDepartment) && (
                 <button
                   onClick={() => {
                     setSelectedLocation("");
-                    setIsLocationOpen(false);
+                    setSelectedDepartment("");
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-blue-50 text-gray-700"
+                  className="flex-1 sm:flex-none px-4 py-2 border border-gray-300 rounded-md flex items-center justify-center gap-2 hover:bg-gray-50 text-red-500"
                 >
-                  All Locations
+                  Clear Filters
+                  <X className="w-4 h-4" />
                 </button>
-                {uniqueLocations.map((location) => (
-                  <button
-                    key={location}
-                    onClick={() => {
-                      setSelectedLocation(location);
-                      setIsLocationOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-blue-50 text-gray-700"
-                  >
-                    {location}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => setIsDepartmentOpen(!isDepartmentOpen)}
-            className="relative group hover:border-purple-500"
-          >
-            <Building2 className="w-4 h-4 mr-2 text-purple-500" />
-            <span>{selectedDepartment || "All Departments"}</span>
-            <ChevronDown className="w-4 h-4 ml-2 group-hover:text-purple-500" />
-            {/* Similar dropdown for departments */}
-          </Button>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Job Listings Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-blue-500" />
-              {filteredJobs.length} Available Positions
-            </h2>
+        {/* Main Content Area */}
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 relative">
+          {/* Left Side - Job Listings */}
+          <div
+            className={`flex-1 transition-all duration-300 ${
+              selectedJob ? "lg:max-w-[50%]" : "max-w-full"
+            }`}
+          >
+            <div className="mb-6">
+              <h2 className="text-lg font-medium">
+                {filteredJobs.length || 0} JOBS FOUND
+              </h2>
+            </div>
+
             <div className="space-y-4">
               {filteredJobs.map((job) => (
                 <JobCard
@@ -301,21 +348,16 @@ export default function JobsPage() {
             </div>
           </div>
 
-          {/* Job Details Section */}
-          <div className="lg:sticky lg:top-4 h-fit">
-            <AnimatePresence mode="wait">
-              {selectedJob && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden"
-                >
-                  {/* Existing job details content */}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Right Side - Job Details */}
+          <AnimatePresence mode="wait">
+            {selectedJob && (
+              <JobDetailsModal
+                job={selectedJob}
+                onClose={() => setSelectedJob(null)}
+                onApply={() => handleApply(selectedJob.id)}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
