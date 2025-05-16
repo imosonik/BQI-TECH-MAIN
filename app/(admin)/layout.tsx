@@ -5,9 +5,5 @@ export default function AdminRootLayout({
 }: {
   children: ReactNode
 }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
+  return children
 }

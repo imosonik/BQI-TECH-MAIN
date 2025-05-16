@@ -1,56 +1,33 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { BlogPostForm } from "@/components/admin/BlogPostForm"
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-interface BlogPost {
-  id?: string
-  title: string
-  excerpt: string
-  content: string
-  imageUrl: string
-  category: string
-  readTime: string
-  published: boolean
-}
+import type { BlogPost } from "@/types/blog"
 
 export default function BlogPostEditor() {
   const { id } = useParams()
   const router = useRouter()
   const isNew = id === "new"
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [blogPost, setBlogPost] = useState<BlogPost | null>(null)
-
-  useEffect(() => {
-    if (!isNew) {
-      fetchBlogPost()
+  const { data: blogPost, isLoading } = useQuery({
+    queryKey: ['blog-post', id],
+    queryFn: async () => {
+      if (isNew) return null
+      const res = await fetch(`/api/admin/blog-posts/${id}`)
+      if (!res.ok) throw new Error('Failed to fetch post')
+      return res.json()
     }
-  }, [id, isNew])
+  })
 
-  const fetchBlogPost = async () => {
-    try {
-      const response = await fetch(`/api/admin/blog-posts/${id}`)
-      if (!response.ok) throw new Error("Failed to fetch blog post")
-      const data = await response.json()
-      setBlogPost(data)
-    } catch (error) {
-      toast.error("Failed to fetch blog post")
-      router.push("/admin/blog-management")
-    }
-  }
-
-  const handleSubmit = async (data: BlogPost) => {
-    setIsLoading(true)
-
+  const handleSubmit = async (data: Partial<BlogPost>) => {
     try {
       const url = isNew ? "/api/admin/blog-posts" : `/api/admin/blog-posts/${id}`
-      const method = isNew ? "POST" : "PUT"
+      const method = isNew ? "POST" : "PATCH"
 
       const response = await fetch(url, {
         method,
@@ -62,14 +39,13 @@ export default function BlogPostEditor() {
 
       toast.success("Blog post saved successfully")
       router.push("/admin/blog-management")
+      router.refresh()
     } catch (error) {
       toast.error("Failed to save blog post")
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  if (!isNew && !blogPost) {
+  if (!isNew && isLoading) {
     return <div>Loading...</div>
   }
 

@@ -38,19 +38,43 @@ export async function GET(
   }
 }
 
+// Handle both PUT and PATCH methods
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  return updateBlogPost(request, params)
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  return updateBlogPost(request, params)
+}
+
+// Shared update function
+async function updateBlogPost(
+  request: Request,
+  { id }: { id: string }
+) {
   try {
     const data = await request.json()
     const validated = blogPostSchema.parse(data)
-
+    
     const post = await prisma.blogPost.update({
-      where: { id: params.id },
-      data: validated,
+      where: { id },
+      data: {
+        title: validated.title,
+        content: validated.content,
+        excerpt: validated.excerpt,
+        imageUrl: validated.imageUrl,
+        category: validated.category,
+        readTime: validated.readTime,
+        published: validated.published ?? false,
+      }
     })
-
+    
     return NextResponse.json(post)
   } catch (error) {
     console.error("Failed to update blog post:", error)

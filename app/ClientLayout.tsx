@@ -9,6 +9,7 @@ import { JsonLd } from '@/components/JsonLd'
 import ClientLayout from "@/components/ClientLayout"
 import { CookieConsentBanner } from '@/components/CookieConsentBanner'
 import Script from 'next/script'
+import Image from 'next/image'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,13 @@ export function ClientWrapper({ children }: { children: React.ReactNode }) {
           <JsonLd />
         </QueryClientProvider>
       </SettingsProvider>
+      <Image 
+        src="/bqilogo-light.png"
+        alt="BQI Tech Logo"
+        width={150}
+        height={50}
+        priority
+      />
     </>
   )
 } 
