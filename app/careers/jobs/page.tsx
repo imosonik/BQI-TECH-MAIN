@@ -66,7 +66,11 @@ const JobCard = ({ job, isSelected, onClick }: { job: JobPosting; isSelected: bo
   </motion.div>
 );
 
-const JobDetailsModal = ({ job, onClose, onApply }: { job: JobPosting; onClose: () => void; onApply: () => void }) => (
+const JobDetailsModal = ({ job, onClose, onApply }: { 
+  job: JobPosting; 
+  onClose: () => void; 
+  onApply: () => void 
+}) => (
   <motion.div
     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto"
     initial={{ opacity: 0 }}
