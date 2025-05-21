@@ -279,6 +279,18 @@ mongoose.connection.on('connected', () => {
   migrateQuestions().catch(console.error);
 });
 
+export type {
+  IUser,
+  IApplication,
+  IJobPosting,
+  INotification
+};
+
+export type { IUserSettings };
+export type { INotificationPreference };
+export type { IBlogPost };
+export type { IJobQuestion };
+
 export {
   User,
   Application,
@@ -287,14 +299,5 @@ export {
   UserSettings,
   NotificationPreference,
   BlogPost,
-  JobQuestion,
-  // Export interfaces for use in other files
-  IUser,
-  IApplication,
-  IJobPosting,
-  INotification,
-  IUserSettings,
-  INotificationPreference,
-  IBlogPost,
-  IJobQuestion
+  JobQuestion
 }; 
