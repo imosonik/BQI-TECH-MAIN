@@ -8,6 +8,7 @@ import {
 import { Application } from "@/types/application";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { formatDate } from "@/lib/utils";
 
 interface ViewApplicationModalProps {
   application: Application | null;
@@ -25,13 +26,15 @@ export function ViewApplicationModal({
   if (!application) return null;
 
   const handleViewResume = () => {
-    if (application.resumeUrl) {
+    if (application.cvUrl) {
+      setIsLoading(true);
       const link = document.createElement("a");
-      link.href = application.resumeUrl;
-      link.target = "_blank"; // Open in a new tab
+      link.href = application.cvUrl;
+      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setIsLoading(false);
     }
   };
 
@@ -63,19 +66,20 @@ export function ViewApplicationModal({
           </div>
           <div>
             <h3 className="font-semibold">Applied Date</h3>
-            <p>{application.appliedDate}</p>
+            <p>{formatDate(application.appliedDate)}</p>
           </div>
           <div>
             <h3 className="font-semibold">Status</h3>
             <p>{application.status}</p>
           </div>
-          {application.resumeUrl && (
+          {application.cvUrl && (
             <div className="flex space-x-4 mt-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleViewResume}
                 className="px-4 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 focus:outline-none"
+                disabled={isLoading}
               >
                 {isLoading ? "Loading..." : "VIEW CV"}
               </motion.button>

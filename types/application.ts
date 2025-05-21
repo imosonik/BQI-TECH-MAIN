@@ -20,7 +20,7 @@ export interface Application {
     experience: string
     salary: string
     status: string
-    appliedDate: string
+    appliedDate: Date
     shortlistedDate?: string
     assessmentDate?: string
     assessmentScore?: number
