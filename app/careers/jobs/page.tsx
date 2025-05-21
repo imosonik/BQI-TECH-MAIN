@@ -47,7 +47,7 @@ const JobCard = ({ job, isSelected, onClick }: { job: JobPosting; isSelected: bo
         </span>
         {job.salary && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-            {job.salary.currency} {job.salary.min.toLocaleString()} - {job.salary.max.toLocaleString()}
+            {formatSalaryRange(job.salary) || 'Salary Negotiable'}
           </span>
         )}
       </div>
@@ -98,7 +98,7 @@ const JobDetailsModal = ({ job, onClose, onApply }: {
             </span>
           </div>
           <Button
-            onClick={onApply}
+            onClick={() => onApply()}
             className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
           >
             Apply Now
@@ -113,6 +113,13 @@ const JobDetailsModal = ({ job, onClose, onApply }: {
     </div>
   </motion.div>
 );
+
+const formatSalaryRange = (salary?: { currency?: string; min?: number; max?: number }) => {
+  if (!salary || !salary.min || !salary.max) return null;
+  
+  const currency = salary.currency || 'KES';
+  return `${currency} ${salary.min.toLocaleString()} - ${salary.max.toLocaleString()}`;
+};
 
 export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,13 +170,13 @@ export default function JobsPage() {
     return matchesSearch && matchesLocation && matchesDepartment;
   });
 
-  const handleApply = (jobId: string) => {
+  const handleApply = (job: JobPosting) => {
     if (!isSignedIn) {
-      sessionStorage.setItem("pendingJobApplication", jobId);
+      sessionStorage.setItem("pendingJobApplication", job._id);
       router.push("/login?redirect=/dashboard/apply");
       return;
     }
-    router.push(`/dashboard/apply/${jobId}`);
+    router.push(`/dashboard/apply/${job._id}?questions=${job.questions.join(',')}`);
   };
 
   if (isLoading) return <Loader />;
@@ -290,9 +297,9 @@ export default function JobsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-7xl mx-auto">
             {filteredJobs.map((job) => (
               <JobCard
-                key={job.id}
+                key={job._id}
                 job={job}
-                isSelected={selectedJob?.id === job.id}
+                isSelected={selectedJob?._id === job._id}
                 onClick={() => setSelectedJob(job)}
               />
             ))}
@@ -305,7 +312,7 @@ export default function JobsPage() {
             <JobDetailsModal
               job={selectedJob}
               onClose={() => setSelectedJob(null)}
-              onApply={() => handleApply(selectedJob.id)}
+              onApply={() => handleApply(selectedJob)}
             />
           )}
         </AnimatePresence>

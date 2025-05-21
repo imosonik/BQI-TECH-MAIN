@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import type { ActionResponse } from "@/types/action";
-import { prisma } from "@/lib/prisma";
+
 import { sendEmail } from "@/lib/email";
 import { Dropbox } from "dropbox";
 import fetch from "node-fetch";
@@ -11,201 +11,56 @@ import {
   getApplicationConfirmationEmail,
   getBaseEmailTemplate,
 } from "@/lib/email-templates";
+import mongoose from "mongoose";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+
 
 const submitApplicationSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phoneNumber: z.string().nullable(),
-  position: z.string().min(1, "Position is required"),
-  location: z.string().min(1, "Location is required"),
-  resume: z.any(),
-  hearAbout: z.string().min(1, "How you heard about us is required"),
-  otherSource: z.string().optional().nullable(),
-  experience: z.string().min(1, "Experience level is required"),
-  salary: z.string().min(1, "Salary expectation is required"),
+  jobId: z.string().min(1, "Job ID is required"),
+  cvUrl: z.string().url("Invalid CV URL"),
+  answers: z.array(z.object({
+    questionId: z.string(),
+    questionText: z.string(),
+    answer: z.string()
+  }))
 });
 
-export async function submitApplication(
-  formData: FormData
-): Promise<ActionResponse> {
+// Rename the local type
+type SubmissionResponse = {
+  applicationId: string | null;
+  error: string | null;
+};
+
+export async function submitApplication(data: z.infer<typeof submitApplicationSchema>): Promise<SubmissionResponse> {
   try {
-    const resumeFile = formData.get("resume") as File | null;
+    const parsedData = submitApplicationSchema.parse(data);
+    const db = mongoose.connection.db;
 
-    const parsedData = submitApplicationSchema.parse({
-      name: formData.get("name"),
-      email: formData.get("email"),
-      phoneNumber: formData.get("phoneNumber"),
-      position: formData.get("position"),
-      location: formData.get("location"),
-      resume: resumeFile,
-      hearAbout: formData.get("hearAbout"),
-      otherSource: formData.get("otherSource"),
-      experience: formData.get("experience"),
-      salary: formData.get("salary"),
-    });
+    const application = {
+      jobId: new mongoose.Types.ObjectId(parsedData.jobId),
+      cvUrl: parsedData.cvUrl,
+      answers: parsedData.answers.map(answer => ({
+        questionId: new mongoose.Types.ObjectId(answer.questionId),
+        questionText: answer.questionText,
+        answer: answer.answer
+      })),
+      appliedDate: new Date(),
+      status: 'Applied'
+    };
 
-    let resumeUrl = "";
-    const accessToken = process.env.DROPBOX_ACCESS_TOKEN;
-
-    if (!accessToken) {
-      throw new Error("Dropbox access token is not defined.");
-    }
-
-    if (resumeFile && resumeFile.size <= MAX_FILE_SIZE) {
-      const dbx = createDropboxInstance(accessToken);
-      const buffer = await resumeFile.arrayBuffer();
-
-      try {
-        const uploadResponse = await dbx.filesUpload({
-          path: `/resumes/${parsedData.name.replace(
-            /\s+/g,
-            "_"
-          )}_${Date.now()}.pdf`,
-          contents: buffer,
-          mode: { ".tag": "add" },
-          autorename: true,
-          mute: false,
-        });
-
-        const path = uploadResponse.result.path_lower;
-        if (!path) {
-          throw new Error("Upload path is undefined");
-        }
-        const linkResponse = await dbx.sharingCreateSharedLinkWithSettings({
-          path,
-        });
-        if (linkResponse.result.url) {
-          resumeUrl = linkResponse.result.url.replace("?dl=0", "?dl=1"); // Direct download link
-        } else {
-          throw new Error("Failed to create shared link: URL is undefined");
-        }
-      } catch (uploadError) {
-        const error = uploadError as { status?: number; message?: string };
-
-        if (error.status === 401) {
-          const newAccessToken = await refreshDropboxToken();
-          if (newAccessToken) {
-            const dbx = createDropboxInstance(newAccessToken);
-            const buffer = await resumeFile.arrayBuffer();
-
-            const uploadResponse = await dbx.filesUpload({
-              path: `/resumes/${parsedData.name.replace(
-                /\s+/g,
-                "_"
-              )}_${Date.now()}.pdf`,
-              contents: buffer,
-              mode: { ".tag": "add" },
-              autorename: true,
-              mute: false,
-            });
-
-            const path = uploadResponse.result.path_lower;
-            if (!path) {
-              throw new Error("Upload path is undefined");
-            }
-            const linkResponse = await dbx.sharingCreateSharedLinkWithSettings({
-              path,
-            });
-            if (linkResponse.result.url) {
-              resumeUrl = linkResponse.result.url.replace("?dl=0", "?dl=1"); // Direct download link
-            } else {
-              throw new Error("Failed to create shared link: URL is undefined");
-            }
-          } else {
-            throw new Error("Failed to refresh Dropbox token.");
-          }
-        } else {
-          console.error("Dropbox upload error:", error.message);
-          throw new Error("Failed to upload resume. Please try again.");
-        }
-      }
-    }
-
-    const application = await prisma.application.create({
-      data: {
-        name: parsedData.name,
-        email: parsedData.email,
-        phoneNumber: parsedData.phoneNumber,
-        position: parsedData.position,
-        location: parsedData.location,
-        resumeUrl: resumeUrl,
-        hearAbout: parsedData.hearAbout,
-        otherSource: parsedData.otherSource,
-        experience: parsedData.experience,
-        salary: parsedData.salary,
-        status: "Applications",
-        appliedDate: new Date(),
-        lastUpdated: new Date(),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        position: true,
-        location: true,
-        resumeUrl: true,
-        status: true,
-        appliedDate: true
-      }
-    });
-
-    await Promise.all([
-      sendEmail({
-        to: parsedData.email,
-        subject: "Application Received - BQI Tech",
-        body: getApplicationConfirmationEmail(
-          parsedData.name,
-          parsedData.position
-        ),
-      }),
-      sendEmail({
-        to: process.env.HR_EMAIL || "",
-        subject: "New Application Received - BQI Tech",
-        body: getBaseEmailTemplate({
-          recipientName: "HR Team",
-          content: `
-            <p>A new application has been received for the ${
-              parsedData.position
-            } position.</p>
-            <p><strong>Applicant Details:</strong></p>
-            <ul style="padding-left: 20px; margin: 16px 0;">
-              <li>Name: ${parsedData.name}</li>
-              <li>Email: ${parsedData.email}</li>
-              <li>Phone: ${parsedData.phoneNumber || "Not provided"}</li>
-              <li>Location: ${parsedData.location}</li>
-              <li>Experience Level: ${parsedData.experience}</li>
-              <li>Source: ${parsedData.hearAbout}${
-            parsedData.otherSource ? ` - ${parsedData.otherSource}` : ""
-          }</li>
-              <li>Expected Salary: ${parsedData.salary}</li>
-            </ul>
-            ${
-              resumeUrl
-                ? `<p>Resume: <a href="${resumeUrl}" style="color: #2563eb;">Download Resume</a></p>`
-                : ""
-            }
-          `,
-          ctaLink: `${process.env.NEXT_PUBLIC_APP_URL}/admin/applications}`,
-          ctaText: "View Application",
-        }),
-      }),
-    ]).catch((emailError) => {
-      console.error("Email sending error:", emailError);
-    });
-
+    // Direct MongoDB collection access
+    const result = await db.collection('applications').insertOne(application);
+    
     return {
-      success: true,
-      message: "Application submitted successfully",
-      data: { applicationId: application.id },
+      applicationId: result.insertedId.toString(),
+      error: null,
     };
   } catch (error) {
     console.error("Application submission error:", error);
     return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to submit application",
+      applicationId: null,
+      error: error instanceof Error ? error.message : "Failed to submit application",
     };
   }
 }

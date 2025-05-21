@@ -20,7 +20,7 @@ const tabs = [
     id: "overview",
     icon: BarChart2,
     label: "Overview",
-    href: "/dashboard/(dashboard)",
+    href: "/dashboard/overview",
   },
   {
     id: "applications",

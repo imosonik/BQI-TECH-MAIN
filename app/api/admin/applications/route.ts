@@ -1,40 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import mongoose from "mongoose";
+import connectToDatabase from "@/lib/mongodb";
+import { Application } from "@/models/application";
+import { auth } from "@clerk/nextjs/server";
 
 const prisma = new PrismaClient();
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const status = searchParams.get('status');
+export async function GET() {
+  await connectToDatabase();
 
   try {
-    const applications = await prisma.application.findMany({
-      where: status ? { status } : {},
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phoneNumber: true,
-        position: true,
-        appliedDate: true,
-        status: true,
-        shortlistedDate: true,
-        resumeUrl: true,
-        cotsExperience: true,
-        sqlJavaScriptExperience: true,
-        reportDevelopmentExperience: true,
-        hearAbout: true,
-        otherSource: true,
-        experience: true,
-        salary: true
-      },
-      
+    const { userId } = await auth();
+    
+    // Add your admin check logic here
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" }, 
+        { status: 401 }
+      );
+    }
+
+    const applications = await Application.find()
+      .select('name email phoneNumber position status appliedDate cvUrl answers jobId')
+      .lean();
+
+    return NextResponse.json({
+      applications: applications.map(app => ({
+        ...app,
+        id: app._id.toString(),
+        _id: undefined
+      }))
     });
-    return NextResponse.json({ applications });
+
   } catch (error) {
-    console.error('Error fetching applications:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    console.error("Error fetching applications:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" }, 
+      { status: 500 }
+    );
   }
 }

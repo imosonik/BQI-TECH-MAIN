@@ -19,6 +19,7 @@ import {
   Settings,
   ChevronRight,
   ChevronLeft,
+  HelpCircle,
 } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -67,6 +68,12 @@ const tabs = [
     icon: Briefcase,
     label: "Job Postings",
     href: "/admin/job-postings",
+  },
+  {
+    id: "questions",
+    icon: HelpCircle,
+    label: "Questions Management",
+    href: "/admin/job-postings/questions",
   },
   {
     id: "whats-new",

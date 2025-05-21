@@ -5,9 +5,10 @@ import { NotificationButton } from "@/components/NotificationButton";
 interface AdminPageHeaderProps {
   title: string;
   breadcrumb?: string;
+  children?: React.ReactNode;
 }
 
-export function AdminPageHeader({ title, breadcrumb }: AdminPageHeaderProps) {
+export function AdminPageHeader({ title, breadcrumb, children }: AdminPageHeaderProps) {
   const { user } = useUser();
 
   return (
@@ -42,6 +43,8 @@ export function AdminPageHeader({ title, breadcrumb }: AdminPageHeaderProps) {
           <span>{breadcrumb}</span>
         </div>
       )}
+
+      {children}
     </div>
   );
 } 

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
 import { auth, currentUser } from "@clerk/nextjs/server"
-
-const prisma = new PrismaClient()
+import mongoose from "mongoose"
+import connectToDatabase from "@/lib/mongodb"
+import { Application } from "@/models/application"
+import { headers } from "next/headers"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  await connectToDatabase()
+
   try {
     const { userId } = await auth()
     const user = await currentUser()
@@ -21,24 +24,10 @@ export async function GET(
 
     const userEmail = user.emailAddresses[0].emailAddress
 
-    const application = await prisma.application.findFirst({
-      where: {
-        AND: [
-          { id: params.id },
-          { email: userEmail }
-        ]
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phoneNumber: true,
-        position: true,
-        status: true,
-        appliedDate: true,
-        resumeUrl: true
-      }
-    })
+    const application = await Application.findOne({
+      _id: new mongoose.Types.ObjectId(params.id),
+      email: userEmail
+    }).lean() as mongoose.FlattenMaps<mongoose.Document & { _id: mongoose.Types.ObjectId }>;
 
     if (!application) {
       return NextResponse.json(
@@ -47,7 +36,16 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(application)
+    const headers = new Headers();
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    return NextResponse.json({
+      ...application,
+      id: application._id.toString(),
+      _id: undefined
+    }, { headers });
 
   } catch (error) {
     console.error("Error fetching application:", error)
@@ -55,7 +53,14 @@ export async function GET(
       { error: "Internal Server Error" }, 
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
+}
+
+export async function OPTIONS() {
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  
+  return new NextResponse(null, { headers });
 } 

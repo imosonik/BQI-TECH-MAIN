@@ -55,10 +55,17 @@ export async function generateMetadata(): Promise<Metadata> {
         style-src 'self' 'unsafe-inline';
         img-src 'self' data: https: blob:;
         font-src 'self' data:;
-        connect-src 'self' https://*.clerk.accounts.dev https://*.googletagmanager.com https://*.clerk.dev https://accounts.google.com;
+        connect-src 'self' 
+          https://*.clerk.accounts.dev 
+          https://*.clerk.dev 
+          https://clerk-telemetry.com 
+          https://*.googletagmanager.com 
+          https://www.googletagmanager.com
+          https://accounts.google.com
+          ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr' : ''};
         frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://accounts.google.com;
         worker-src 'self' blob:;
-      `.replace(/\s+/g, ' ').trim()
+      `.replace(/\n/g, ' ').trim()
     }
   }
 }
@@ -77,10 +84,17 @@ export default function RootLayout({
           style-src 'self' 'unsafe-inline';
           img-src 'self' data: https: blob:;
           font-src 'self' data:;
-          connect-src 'self' https://*.clerk.accounts.dev https://*.googletagmanager.com https://*.clerk.dev https://accounts.google.com;
+          connect-src 'self' 
+            https://*.clerk.accounts.dev 
+            https://*.clerk.dev 
+            https://clerk-telemetry.com 
+            https://*.googletagmanager.com 
+            https://www.googletagmanager.com
+            https://accounts.google.com
+            ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr' : ''};
           frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://accounts.google.com;
           worker-src 'self' blob:;
-        `.replace(/\s+/g, ' ').trim()} />
+        `.replace(/\n/g, ' ').trim()} />
       </head>
       <body>
         <ClientWrapper>

@@ -1,60 +1,72 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import mongoose from 'mongoose';
+import connectToDatabase from '@/lib/mongodb';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
+import { submitApplication } from '@/actions/submitApplication';
 
 const applicationSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-  position: z.string(),
-  resumeUrl: z.string().url(),
-  status: z.string(),
-  appliedDate: z.date(),
-  location: z.string(),
-  hearAbout: z.string(),
-  experience: z.string(),
-  salary: z.string(),
-  phoneNumber: z.string().nullable(),
-  otherSource: z.string().nullable()
+  jobId: z.string().min(1),
+  answers: z.array(z.object({
+    questionId: z.string(),
+    questionText: z.string(),
+    answer: z.string()
+  })),
+  cvUrl: z.string().url().min(1, "CV URL is required")
 });
 
-type ApplicationData = z.infer<typeof applicationSchema>;
-
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const validatedData = applicationSchema.parse(body);
+  await connectToDatabase();
 
-    const application = await prisma.application.create({
-      data: {
-        name: validatedData.name,
-        email: validatedData.email,
-        phoneNumber: validatedData.phoneNumber,
-        position: validatedData.position,
-        location: validatedData.location,
-        resumeUrl: validatedData.resumeUrl,
-        hearAbout: validatedData.hearAbout,
-        otherSource: validatedData.otherSource,
-        experience: validatedData.experience,
-        salary: validatedData.salary,
-        status: validatedData.status,
-        appliedDate: validatedData.appliedDate,
-        lastUpdated: new Date()
-      }
+  try {
+    const formData = await request.formData();
+    
+    // Extract all dynamic fields except system fields
+    const systemFields = ['jobId', 'cvUrl'];
+    const answers = Array.from(formData.entries())
+      .filter(([key]) => key.startsWith('question_'))
+      .map(([key, value]) => {
+        const questionData = JSON.parse(value.toString());
+        return {
+          questionId: questionData.id,
+          questionText: questionData.text,
+          answer: questionData.answer
+        };
+      });
+
+    const submissionData = {
+      jobId: formData.get('jobId')?.toString() || '',
+      cvUrl: formData.get('cvUrl')?.toString() || '',
+      answers
+    };
+
+    // Add server-side validation
+    const validatedData = applicationSchema.parse({
+      jobId: formData.get('jobId'),
+      cvUrl: formData.get('cvUrl'),
+      answers: answers.map(a => ({
+        questionId: a.questionId,
+        questionText: a.questionText,
+        answer: a.answer
+      }))
     });
+
+    // Pass validated data to submit action
+    const { applicationId, error } = await submitApplication(validatedData);
+
+    if (error) {
+      throw new Error(error);
+    }
 
     return NextResponse.json({ 
-      success: true, 
-      application 
+      success: true,
+      applicationId
     });
+
   } catch (error) {
-    console.error('Error submitting application:', error);
+    console.error('Submission error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' }, 
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

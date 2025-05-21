@@ -1,54 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import connectToDatabase from '@/lib/mongodb';
+import { Application } from '@/models/application';
+import mongoose from 'mongoose';
+import { FlattenMaps } from 'mongoose';
+import { ApplicationDocument } from '@/models/application';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  await connectToDatabase();
+  
   try {
-    const application = await prisma.application.findUnique({
-      where: { id: params.id },
-    });
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+      return NextResponse.json({ error: 'Invalid application ID' }, { status: 400 });
+    }
+
+    const application = await Application.findById(params.id).lean() as FlattenMaps<ApplicationDocument>;
+
     if (!application) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
-    return NextResponse.json(application);
+
+    return NextResponse.json({
+      ...application,
+      id: application._id.toString(),
+      _id: undefined
+    });
+    
   } catch (error) {
     console.error('Error fetching application:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  await connectToDatabase();
+  
   try {
     const body = await request.json();
-    const updatedApplication = await prisma.application.update({
-      where: { id: params.id },
-      data: {
+    
+    const updatedApplication = await Application.findByIdAndUpdate(
+      params.id,
+      {
         ...body,
         shortlistedDate: body.status === 'Shortlisted' ? new Date() : null,
       },
+      { new: true, runValidators: true }
+    ).select('-__v').lean() as FlattenMaps<ApplicationDocument>;
+
+    if (!updatedApplication) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      ...updatedApplication,
+      id: updatedApplication._id.toString(),
+      _id: undefined
     });
-    return NextResponse.json(updatedApplication);
+    
   } catch (error) {
     console.error('Error updating application:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  await connectToDatabase();
+  
   try {
-    await prisma.application.delete({
-      where: { id: params.id },
-    });
+    const deletedApplication = await Application.findByIdAndDelete(params.id);
+
+    if (!deletedApplication) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+    }
+
     return new NextResponse(null, { status: 204 });
+    
   } catch (error) {
     console.error('Error deleting application:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
+    );
   }
 }

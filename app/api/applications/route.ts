@@ -1,47 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { auth, currentUser } from "@clerk/nextjs/server";
-
-const prisma = new PrismaClient();
+import mongoose from "mongoose";
+import connectToDatabase from "@/lib/mongodb";
+import { Application } from "@/models/application";
 
 export async function GET(request: NextRequest) {
+  await connectToDatabase();
+
   try {
     const { userId } = await auth();
     const user = await currentUser();
-
+    
     if (!userId || !user?.emailAddresses?.[0]?.emailAddress) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" }, 
+        { status: 401 }
+      );
     }
 
     const userEmail = user.emailAddresses[0].emailAddress;
 
-    const applications = await prisma.application.findMany({
-      where: {
-        email: userEmail,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phoneNumber: true,
-        position: true,
-        status: true,
-        appliedDate: true,
-        resumeUrl: true,
-      },
-      orderBy: {
-        appliedDate: "desc",
-      },
+    // Get all applications for the current user
+    const applications = await Application.find({ email: userEmail })
+      .select('name email phoneNumber position status appliedDate cvUrl answers jobId')
+      .lean();
+
+    return NextResponse.json({
+      applications: applications.map(app => ({
+        ...app,
+        id: app._id.toString(),
+        _id: undefined
+      }))
     });
 
-    return NextResponse.json({ applications });
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error" }, 
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
-}
+} 

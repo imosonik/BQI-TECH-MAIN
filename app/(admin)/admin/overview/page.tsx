@@ -11,23 +11,32 @@ import { useUser } from "@clerk/nextjs"
 import Link from "next/link";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 
-// Separate fetchers for different endpoints
+// Update the overview fetcher to match MongoDB response format
 const overviewFetcher = async (url: string) => {
   const res = await fetch(url);
   const data = await res.json();
-  return data;
+  return {
+    totalApplications: data.totalApplications,
+    shortlisted: data.shortlisted,
+    technicalAssessment: data.technical,
+    interviewing: data.interviewing,
+    hired: data.hired,
+    disqualified: data.disqualified
+  };
 };
 
+// Update applications fetcher to handle MongoDB transformed data
 const applicationsFetcher = async (url: string) => {
   const res = await fetch(url);
   const data = await res.json();
-  return Array.isArray(data) ? data : data.applications || [];
+  return Array.isArray(data) ? data : []; // Handles both array and object responses
 };
 
+// Update the Application interface to match MongoDB schema
 interface Application {
   id: string
   name: string
-  position: string
+  email: string
   status: string
   appliedDate: string
 }
@@ -51,43 +60,43 @@ export default function OverviewPage() {
   const overviewItems = [
     { 
       title: 'Total Applications', 
-      value: overviewData?.totalApplications || 0, 
-      icon: FileText, 
+      value: overviewData?.totalApplications || 0,
+      icon: FileText,
       color: 'from-blue-400 to-blue-600',
       href: '/admin/applications'
     },
     { 
       title: 'Shortlisted', 
-      value: overviewData?.shortlisted || 0, 
-      icon: CheckCircle, 
+      value: overviewData?.shortlisted || 0,
+      icon: CheckCircle,
       color: 'from-green-400 to-green-600',
       href: '/admin/shortlisted'
     },
     { 
       title: 'Technical Assessment', 
-      value: overviewData?.technicalAssessment || 0, 
-      icon: Code, 
+      value: overviewData?.technicalAssessment || 0,
+      icon: Code,
       color: 'from-yellow-400 to-yellow-600',
       href: '/admin/technical-assessment'
     },
     { 
       title: 'Interviewing', 
-      value: overviewData?.interviewing || 0, 
-      icon: MessageSquare, 
+      value: overviewData?.interviewing || 0,
+      icon: MessageSquare,
       color: 'from-purple-400 to-purple-600',
       href: '/admin/interviewing'
     },
     { 
       title: 'Hired', 
-      value: overviewData?.hired || 0, 
-      icon: UserCheck, 
+      value: overviewData?.hired || 0,
+      icon: UserCheck,
       color: 'from-indigo-400 to-indigo-600',
       href: '/admin/hired'
     },
     { 
       title: 'Disqualified', 
-      value: overviewData?.disqualified || 0, 
-      icon: XCircle, 
+      value: overviewData?.disqualified || 0,
+      icon: XCircle,
       color: 'from-red-400 to-red-600',
       href: '/admin/disqualified'
     },
@@ -165,7 +174,7 @@ export default function OverviewPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">{app.name}</h3>
-                    <p className="text-sm text-gray-500">{app.position}</p>
+                    <p className="text-sm text-gray-500">{app.email}</p>
                   </div>
                 </div>
                 

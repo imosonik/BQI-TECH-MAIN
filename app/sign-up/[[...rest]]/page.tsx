@@ -154,8 +154,8 @@ export default function SignUpPage() {
                 showOptionalFields: false,
               },
             }}
-            redirectUrl="/dashboard"
-            afterSignUpUrl="/dashboard"
+            redirectUrl="/dashboard/jobs"
+            afterSignUpUrl="/dashboard/jobs"
             signInUrl="/login"
           />
         </motion.div>

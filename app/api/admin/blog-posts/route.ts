@@ -21,6 +21,9 @@ function generateSlug(title: string): string {
     .substring(0, 60) // Limit length
 }
 
+// Add dynamic config to prevent static generation
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const posts = await prisma.blogPost.findMany({
@@ -55,11 +58,7 @@ export async function POST(request: Request) {
     const data = await request.json()
     const validated = blogPostSchema.parse(data)
     
-    const baseSlug = validated.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .substring(0, 60)
+    const baseSlug = generateSlug(validated.title)
 
     const post = await prisma.blogPost.create({
       data: {

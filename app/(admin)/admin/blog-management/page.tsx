@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
-import  DataTable  from "@/components/admin/DataTable"
+import DataTable from '@/components/admin/DataTable'
 import { columns } from "./columns"
 
 interface BlogPost {

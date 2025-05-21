@@ -22,8 +22,15 @@ export default function EditJobPostingPage() {
 
   useEffect(() => {
     async function fetchJobPosting() {
+      // Validate id parameter
+      if (!id) {
+        setError("Invalid job ID");
+        return;
+      }
+
       if (id === "new") {
         const initialJobPosting: JobPosting = {
+          _id: "",
           id: "",
           title: "",
           department: "",
@@ -32,6 +39,7 @@ export default function EditJobPostingPage() {
           postedDate: new Date().toISOString(),
           employmentType: "Full-time",
           category: "",
+          questions: [],
           isActive: true,
         };
         setJobPosting(initialJobPosting);

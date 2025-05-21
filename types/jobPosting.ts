@@ -1,17 +1,19 @@
 export interface JobPosting {
+  _id: string;
   id: string;
   title: string;
-  department: string;
+  department?: string;
   location: string;
+  
   description: string;
   postedDate: string;
-  isActive: boolean;
   employmentType: string;
   category: string;
-  requirements?: string[];
+  isActive: boolean;
   salary?: {
+    currency: string;
     min: number;
     max: number;
-    currency: string;
-  };
+  } | null;
+  questions: string[];
 }

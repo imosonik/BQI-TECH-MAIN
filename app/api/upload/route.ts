@@ -47,7 +47,12 @@ export async function POST(request: NextRequest) {
       .replace('www.dropbox.com', 'dl.dropboxusercontent.com')
       .replace('?dl=0', '')
 
-    return NextResponse.json({ url: directLink })
+    return NextResponse.json({ url: directLink }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST'
+      }
+    })
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(

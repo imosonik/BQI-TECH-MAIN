@@ -2,67 +2,144 @@
 
 import { useState, useEffect } from "react";
 
-import DataTable from "@/components/admin/DataTable";
+import { ApplicationsTable } from "./ApplicationsTable";
 import useSWR from "swr";
 import { EditApplicationModal } from "@/components/admin/EditApplicationModal";
 import { ViewApplicationModal } from "@/components/admin/ViewApplicationModal";
 import { DeleteApplicationModal } from "@/components/admin/DeleteApplicationModal";
 import { Application } from "@/types/application";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { Button } from "@/components/ui/button";
+import { Download, Upload, FileText, Sheet } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const columns = [
-  { header: "Name", accessor: "name" },
-  { header: "Email", accessor: "email" },
-  { header: "Phone Number", accessor: "phoneNumber" },
+interface Column {
+  header: string;
+  accessor: string | ((row: Application) => string);
+}
+
+const getDynamicColumns = (applications: Application[]) => {
+  return []; // No dynamic columns needed now
+};
+
+const staticColumns = [
+  {
+    header: "Applicant",
+    accessor: (row: Application) => row.name || [
+      ...(row.answers || []).filter(a => a.questionText.toLowerCase().includes('name')),
+    ].map(a => a.answer).join(' ')
+  },
+  {
+    header: "Email",
+    accessor: (row: Application) => row.email || 
+      (row.answers || []).find(a => a.questionText.toLowerCase().includes('email'))?.answer
+  },
+  {
+    header: "Phone",
+    accessor: (row: Application) => row.phoneNumber ||
+      (row.answers || []).find(a => a.questionText.toLowerCase().includes('phone'))?.answer
+  },
   { header: "Position", accessor: "position" },
-  { header: "Applied Date", accessor: "appliedDate" },
   { header: "Status", accessor: "status" },
-  { header: "COTS Experience", accessor: "cotsExperience" },
-  { header: "SQL/JS Experience", accessor: "sqlJavaScriptExperience" },
-  { header: "Report Dev Experience", accessor: "reportDevelopmentExperience" },
-  { header: "Hear About", accessor: "hearAbout" },
-  { header: "Other Source", accessor: "otherSource" },
-  { header: "Experience", accessor: "experience" },
-  { header: "Salary", accessor: "salary" }
+  { 
+    header: "Applied Date", 
+    accessor: (row: Application) => new Date(row.appliedDate).toLocaleDateString() 
+  },
+  { 
+    header: "CV", 
+    accessor: (row: Application) => row.cvUrl
+  },
+  {
+    header: "Answers",
+    accessor: (row: Application) => row.answers?.map(a => 
+      `${a.questionText}: ${a.answer}`
+    ).join('\n') || '-',
+    cell: ({ value }: { value: string }) => (
+      <pre className="whitespace-pre-wrap">{value}</pre>
+    )
+  }
 ];
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const oldStructureColumns = [
+  { header: "COTS Experience", accessor: "cotsExperience" },
+  { header: "SQL/JS Experience", accessor: "sqlJavaScriptExperience" },
+  { header: "Report Development", accessor: "reportDevelopmentExperience" }
+];
+
+const newStructureColumns = [
+  {
+    header: "Answers",
+    accessor: (row: Application) => row.answers?.map(a => 
+      `${a.questionText}: ${a.answer}`
+    ).join('\n') || '-'
+  }
+];
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function ApplicationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPosition, setSelectedPosition] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const { data, error, isLoading } = useSWR<
-    Application[] | { applications: Application[] }
-  >("/api/admin/applications", fetcher);
+  const [selectedStructure, setSelectedStructure] = useState<'all' | 'old' | 'new'>('all');
+  const { data, error, isLoading, mutate } = useSWR<{ applications: Application[] }>(
+    "/api/admin/applications", 
+    fetcher
+  );
   const [applications, setApplications] = useState<Application[]>([]);
   const [viewApplication, setViewApplication] = useState<Application | null>(null);
   const [editApplication, setEditApplication] = useState<Application | null>(null);
   const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
+  const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
+  const [jobTitles, setJobTitles] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (data) {
-      if (Array.isArray(data)) {
-        setApplications(data);
-      } else if (data.applications && Array.isArray(data.applications)) {
-        setApplications(data.applications);
-      } else {
-        console.error("Unexpected data format:", data);
-        setApplications([]);
-      }
+    if (data?.applications) {
+      setApplications(data.applications || []);
+      const newColumns = getDynamicColumns(data.applications || []);
+      setDynamicColumns(newColumns);
     }
   }, [data]);
+
+  useEffect(() => {
+    const fetchJobTitles = async () => {
+      try {
+        const response = await fetch('/api/admin/jobs');
+        const jobs = await response.json();
+        const titles = jobs.reduce((acc: Record<string, string>, job: any) => {
+          acc[job.id] = job.title;
+          return acc;
+        }, {});
+        setJobTitles(titles);
+      } catch (error) {
+        console.error('Failed to fetch job titles:', error);
+      }
+    };
+    
+    fetchJobTitles();
+  }, []);
+
+  const allColumns = [
+    ...staticColumns,
+    ...getDynamicColumns(applications)
+  ];
 
   if (error) return <div>Failed to load applications</div>;
   if (isLoading) return <div>Loading...</div>;
 
-  const filteredApplications = applications.filter((app) =>
-    (selectedPosition ? app.position === selectedPosition : true) &&
-    (selectedStatus ? app.status === selectedStatus : true) &&
-    (app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.position.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredApplications = applications?.filter((app) => {
+    const isOldStructure = app.cotsExperience !== undefined;
+    const isNewStructure = app.answers !== undefined;
+    
+    if (selectedStructure === 'old') return isOldStructure;
+    if (selectedStructure === 'new') return isNewStructure;
+    return true;
+  }) ?? [];
 
   function handleView(id: string) {
     const application = applications.find((app) => app.id === id);
@@ -108,7 +185,78 @@ export default function ApplicationsPage() {
 
   return (
     <>
-      <AdminPageHeader title="Applications" breadcrumb="Applications" />
+      <AdminPageHeader title="Applications">
+        <div className="flex gap-2">
+          <input
+            type="file"
+            id="importFile"
+            accept=".json"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                  const data = JSON.parse(event.target?.result as string);
+                  await fetch('/api/admin/applications/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                  });
+                  // Refresh data
+                  mutate();
+                };
+                reader.readAsText(file);
+              }
+            }}
+          />
+          <Button
+            variant="outline"
+            onClick={() => document.getElementById('importFile')?.click()}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Import
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <a 
+                  href="/api/admin/applications/export?format=json"
+                  className="cursor-pointer"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  JSON
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href="/api/admin/applications/export?format=csv"
+                  className="cursor-pointer"
+                >
+                  <Sheet className="mr-2 h-4 w-4" />
+                  CSV
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href="/api/admin/applications/export?format=xlsx"
+                  className="cursor-pointer"
+                >
+                  <Sheet className="mr-2 h-4 w-4" />
+                  Excel
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </AdminPageHeader>
       
       {/* Sticky Search and Filter Section */}
       <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b">
@@ -157,11 +305,21 @@ export default function ApplicationsPage() {
                 onChange={(e) => setSelectedStatus(e.target.value)}
               >
                 <option value="">All Statuses</option>
-                <option value="New">New</option>
-                <option value="Interviewing">Interviewing</option>
-                <option value="Application">Application</option>
-                <option value="Disqualified">Disqualified</option>
+                <option value="Applied">Applied</option>
+                <option value="In Review">In Review</option>
+                <option value="Interview">Interview</option>
                 <option value="Hired">Hired</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+
+              <select
+                value={selectedStructure}
+                onChange={(e) => setSelectedStructure(e.target.value as 'all' | 'old' | 'new')}
+                className="rounded-md border p-2"
+              >
+                <option value="all">All Structures</option>
+                <option value="old">Old Structure</option>
+                <option value="new">New Structure</option>
               </select>
             </div>
           </div>
@@ -171,9 +329,9 @@ export default function ApplicationsPage() {
       {/* Content Area */}
       <div className="p-6">
         <div className="overflow-x-auto">
-          <DataTable
-            columns={columns}
-            data={filteredApplications}
+          <ApplicationsTable
+            applications={filteredApplications}
+            jobTitles={jobTitles}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}

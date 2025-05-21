@@ -16,6 +16,41 @@ const nextConfig = {
     ],
   },
   async headers() {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    const cspDirectives = [
+      `default-src 'self'`,
+      `script-src 'self' ${isProduction ? '' : "'unsafe-inline' 'unsafe-eval'"}`,
+      `style-src 'self' 'unsafe-inline'`,
+      `img-src 'self' data: blob:`,
+      `connect-src 'self'`,
+      `https://*.clerk.accounts.dev`,
+      `https://*.clerk.dev`,
+      `https://clerk-telemetry.com`,
+      `https://*.googletagmanager.com`,
+      `https://www.googletagmanager.com`,
+      `https://accounts.google.com`,
+      process.env.NODE_ENV === 'development' && `ws://localhost:3000/_next/webpack-hmr`
+    ].filter(Boolean);
+
+    if (isProduction) {
+      cspDirectives.push(
+        `script-src-elem 'self' https://www.googletagmanager.com`,
+        `script-src 'self' https: 'nonce-{NONCE_VALUE}'`
+      );
+    }
+
+    const securityHeaders = [
+      {
+        key: 'Content-Security-Policy',
+        value: cspDirectives.join(' '),
+      },
+      {
+        key: 'X-Content-Type-Options',
+        value: 'nosniff'
+      }
+    ];
+
     return [
       {
         source: '/sitemap.xml',
@@ -32,53 +67,7 @@ const nextConfig = {
       },
       {
         source: '/:path*',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'index, follow',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: `
-              default-src 'self';
-              script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.googletagmanager.com https://accounts.google.com https://*.clerk.dev;
-              style-src 'self' 'unsafe-inline';
-              img-src 'self' data: https: blob:;
-              font-src 'self' data:;
-              connect-src 'self' https://*.clerk.accounts.dev https://*.googletagmanager.com https://*.clerk.dev https://accounts.google.com;
-              frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://accounts.google.com;
-              worker-src 'self' blob:;
-            `.replace(/\s+/g, ' ').trim()
-          }
-        ]
+        headers: securityHeaders,
       }
     ]
   },
@@ -122,7 +111,7 @@ const nextConfig = {
       }
     ];
   },
-  transpilePackages: ['@uiw/react-md-editor'],
+  transpilePackages: ['@uiw/react-md-editor', 'react-beautiful-dnd'],
   async rewrites() {
     return [
       {

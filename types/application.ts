@@ -14,7 +14,7 @@ export interface Application {
     phoneNumber: string
     location: string
     position: string
-    resumeUrl: string
+    cvUrl: string
     hearAbout: string
     otherSource?: string
     experience: string
@@ -30,6 +30,14 @@ export interface Application {
     startDate?: string
     disqualifiedDate?: string
     disqualifiedReason?: string
+    answers?: Array<{
+      questionId: string;
+      questionText: string;
+      answer: string;
+    }>;
+    cotsExperience?: string;
+    sqlJavaScriptExperience?: string;
+    reportDevelopmentExperience?: string;
   }
   
   export interface ShortlistedCandidate extends Application {
