@@ -70,7 +70,7 @@ export default function JobListingsPage() {
 
               <div className="pt-4 flex gap-3">
                 <Button
-                  onClick={() => router.push(`/dashboard/apply/${job.id}`)}
+                  onClick={() => router.push(`/dashboard/apply/${job._id}`)}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2 group"
                 >
                   Apply Now
