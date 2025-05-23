@@ -98,7 +98,7 @@ export function getApplicationConfirmationEmail(props: {
     recipientName: props.applicantName,
     content: `
       <h1>Application Received</h1>
-      <p>Hello ${props.applicantName},</p>
+     
       <p>Your application for the <strong>${props.jobTitle}</strong> position has been received.</p>
       <p>We will review your application and contact you within 3-5 business days.</p>
     `,
