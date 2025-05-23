@@ -90,17 +90,21 @@ export function getBaseEmailTemplate({
   `
 }
 
-export function getApplicationConfirmationEmail(name: string, position: string): string {
+export function getApplicationConfirmationEmail(props: {
+  applicantName: string;
+  jobTitle: string;
+}) {
   return getBaseEmailTemplate({
-    recipientName: name,
+    recipientName: props.applicantName,
     content: `
-      <p>Thank you for applying for the ${position} position at BQI Tech.</p>
-      <p>We have received your application and our team will review it shortly. If your qualifications match our requirements, we will contact you to discuss the next steps.</p>
-      <p>In the meantime, you can track your application status through our career portal.</p>
+      <h1>Application Received</h1>
+      <p>Hello ${props.applicantName},</p>
+      <p>Your application for the <strong>${props.jobTitle}</strong> position has been received.</p>
+      <p>We will review your application and contact you within 3-5 business days.</p>
     `,
-    ctaLink: `${process.env.NEXT_PUBLIC_APP_URL}/careers/applications`,
-    ctaText: 'Track Your Application'
-  })
+    ctaLink: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/applications`,
+    ctaText: 'View Application Status'
+  });
 }
 
 export function getInterviewInvitationEmail(name: string, position: string, date: string, location: string): string {
@@ -117,7 +121,7 @@ export function getInterviewInvitationEmail(name: string, position: string, date
     `,
     ctaLink: `${process.env.NEXT_PUBLIC_APP_URL}/careers/interview-confirmation`,
     ctaText: 'Confirm Interview'
-  })
+  });
 }
 
 export function getStatusChangeEmail(name: string, position: string, newStatus: string): string {
