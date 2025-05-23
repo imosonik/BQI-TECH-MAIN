@@ -79,7 +79,7 @@ export async function submitApplication(data: z.infer<typeof submitApplicationSc
 
       // Send notification to admin
       await sendEmail({
-        to: process.env.ADMIN_EMAIL!,
+        to: process.env.HR_EMAIL!,
         subject: 'New Application Received',
         body: getBaseEmailTemplate({
           recipientName: "BQI Hiring Team",
