@@ -7,7 +7,6 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useActionState } from "@/hooks/useActionState"
-import { submitApplication } from "@/actions/submitApplication"
 import toast, { Toaster } from 'react-hot-toast'
 import { ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
@@ -73,7 +72,7 @@ function ApplicationForm() {
     return z.object(schemaMap);
   };
 
-  const { handleSubmit, formState, register, reset, control, trigger, setValue } = useForm<DynamicFormSchema>({
+  const { handleSubmit, formState, register, reset, control, trigger, setValue, setError } = useForm<DynamicFormSchema>({
     resolver: zodResolver(buildFormSchema()),
     mode: 'onChange',
     defaultValues: getDefaultValues(questions),
@@ -98,6 +97,15 @@ function ApplicationForm() {
     setIsSubmitting(true);
 
     try {
+      // Validate email format if email field exists
+      const emailQuestion = questions.find(q => q.text.toLowerCase().includes('email'));
+      if (emailQuestion && data[emailQuestion.id]) {
+        const email = data[emailQuestion.id];
+        if (!z.string().email().safeParse(email).success) {
+          throw new Error('Please enter a valid email address');
+        }
+      }
+
       const formData = new FormData();
       
       // Store both question ID and text in the form data
@@ -129,10 +137,40 @@ function ApplicationForm() {
         throw new Error(result.error || result.message || 'Submission failed');
       }
 
-      router.push('/dashboard/apply/thank-you');
+      // Show success notification with email confirmation
+      toast.success(result.message || 'Application submitted successfully!', {
+        duration: 5000,
+        icon: '✅'
+      });
+
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push('/dashboard/apply/thank-you');
+      }, 2000);
+
+      // Reset form after successful submission
+      reset();
+      
     } catch (error) {
       console.error('Submission error:', error);
-      toast.error(error.message || 'Application submission failed. Please check all required fields.');
+      toast.error(error.message || 'Application submission failed. Please check all required fields.', {
+        duration: 5000,
+        icon: '❌'
+      });
+      
+      // Handle specific email errors
+      if (error.message.includes('email')) {
+        const emailField = questions.find(q => 
+          q.text.toLowerCase().includes('email')
+        )?.id;
+        
+        if (emailField) {
+          setError(emailField, {
+            type: 'manual',
+            message: 'Please check your email address'
+          });
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }

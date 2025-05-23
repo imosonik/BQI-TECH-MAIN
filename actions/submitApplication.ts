@@ -37,6 +37,15 @@ export async function submitApplication(data: z.infer<typeof submitApplicationSc
     const parsedData = submitApplicationSchema.parse(data);
     const db = mongoose.connection.db;
 
+    // Extract applicant email from answers
+    const applicantEmail = parsedData.answers.find(
+      a => a.questionText.toLowerCase() === 'email'
+    )?.answer;
+
+    const job = await db.collection('jobpostings').findOne({ 
+      _id: new mongoose.Types.ObjectId(parsedData.jobId) 
+    });
+
     const application = {
       jobId: new mongoose.Types.ObjectId(parsedData.jobId),
       cvUrl: parsedData.cvUrl,
@@ -46,12 +55,46 @@ export async function submitApplication(data: z.infer<typeof submitApplicationSc
         answer: answer.answer
       })),
       appliedDate: new Date(),
-      status: 'Applied'
+      status: 'Applied',
+      position: job?.title || parsedData.jobId,
     };
 
-    // Direct MongoDB collection access
     const result = await db.collection('applications').insertOne(application);
     
+    // Send emails only after successful DB insertion
+    try {
+      // Send confirmation to applicant
+      if (applicantEmail) {
+        await sendEmail({
+          to: applicantEmail,
+          subject: 'Application Received',
+          body: getApplicationConfirmationEmail({
+            applicantName: parsedData.answers.find(a => 
+              a.questionText.toLowerCase().includes('name')
+            )?.answer || 'Applicant',
+            jobTitle: job?.title || 'the position'
+          })
+        });
+      }
+
+      // Send notification to admin
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL!,
+        subject: 'New Application Received',
+        body: getBaseEmailTemplate({
+          recipientName: "BQI Hiring Team",
+          content: `
+            <h1>New Application Submitted</h1>
+            <p>Job ID: ${parsedData.jobId}</p>
+            <p>Applicant Email: ${applicantEmail || 'Not provided'}</p>
+            <p>Submitted at: ${new Date().toLocaleString()}</p>
+          `
+        })
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+    }
+
     return {
       applicationId: result.insertedId.toString(),
       error: null,
