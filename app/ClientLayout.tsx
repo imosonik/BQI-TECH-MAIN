@@ -52,13 +52,7 @@ export function ClientWrapper({ children }: { children: React.ReactNode }) {
           <JsonLd />
         </QueryClientProvider>
       </SettingsProvider>
-      <Image 
-        src="/bqilogo-light.png"
-        alt="BQI Tech Logo"
-        width={150}
-        height={50}
-        priority
-      />
+  
     </>
   )
 } 
