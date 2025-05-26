@@ -48,6 +48,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import Select from 'react-select';
 import { Label } from "@/components/ui/label";
+import { AddQuestionModal } from '@/components/admin/questions/add-question-modal';
+import { EditQuestionModal } from '@/components/admin/questions/edit-question-modal';
 
 interface Question {
   id: string;
@@ -69,7 +71,18 @@ const questionSchema = z.object({
   })).min(1, "At least one job must be selected"),
   question: z.string().min(1, "Question is required"),
   type: z.enum(["text", "select", "radio", "boolean", "file"]),
-  options: z.array(z.string()).optional(),
+  options: z.array(z.string()).superRefine((val, ctx) => {
+    const formValues = ctx as unknown as { type: string }; // Type assertion
+    if ((formValues.type === "select" || formValues.type === "radio") && val.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Options are required for this question type",
+      });
+    }
+    if (formValues.type === "boolean") {
+      return ["Yes", "No"]; // Auto-populate
+    }
+  }),
   required: z.boolean().default(true),
   order: z.number().default(0),
 });
@@ -162,7 +175,7 @@ export default function QuestionsManagementPage() {
         body: JSON.stringify({
           ...data,
           jobIds: data.jobIds.map(j => j.value),
-          options: data.type === 'text' ? [] : data.options
+          options: data.options 
         }),
       });
       if (!res.ok) {
@@ -191,7 +204,7 @@ export default function QuestionsManagementPage() {
         body: JSON.stringify({
           ...data,
           jobIds: data.jobIds.map(j => j.value),
-          options: data.type === 'text' ? [] : data.options
+          options: data.options
         }),
       });
       if (!response.ok) throw new Error('Failed to update question');
@@ -532,285 +545,37 @@ export default function QuestionsManagementPage() {
         </DragDropContext>
       </div>
 
-      {/* Add Question Modal */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Question</DialogTitle>
-          </DialogHeader>
-          <Form {...addForm}>
-            <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
-              <FormField
-                control={addForm.control}
-                name="question"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Question</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter your question" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <AddQuestionModal
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        onSubmit={onAddSubmit}
+        isLoading={addQuestionMutation.isPending}
+        jobOptions={jobOptions}
+        showOptions={showOptions}
+        options={options}
+        optionInput={optionInput}
+        handleAddOption={handleAddOption}
+        handleRemoveOption={handleRemoveOption}
+        handleTypeChange={handleAddTypeChange}
+        setOptionInput={setOptionInput}
+      />
 
-              <FormField
-                control={addForm.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Question Type</FormLabel>
-                    <Select
-                      options={questionTypeOptions}
-                      onChange={(selected) => field.onChange(selected?.value)}
-                      value={questionTypeOptions.find(opt => opt.value === field.value)}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {showOptions && (
-                <div className="space-y-2">
-                  <FormLabel>Options</FormLabel>
-                  <div className="flex gap-2">
-                    <Input
-                      value={optionInput}
-                      onChange={(e) => setOptionInput(e.target.value)}
-                      placeholder="Enter an option"
-                    />
-                    <Button type="button" onClick={() => handleAddOption(false)}>
-                      Add
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {options.map((option, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span>{option}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveOption(index, false)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <FormField
-                control={addForm.control}
-                name="required"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between">
-                    <FormLabel>Required</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={addForm.control}
-                name="jobIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assign to Jobs</FormLabel>
-                    <Select
-                      isMulti
-                      options={isLoadingJobs ? [] : jobs.map(j => ({
-                        value: j.id,
-                        label: j.title
-                      })) || []}
-                      isLoading={isLoadingJobs}
-                      loadingMessage={() => "Loading jobs..."}
-                      onChange={(selectedOptions) => {
-                        const selectedValues = selectedOptions?.map(option => option.value) || [];
-                        field.onChange(selectedValues.map(value => ({ value })));
-                      }}
-                      value={field.value}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsAddOpen(false)}
-                  disabled={addQuestionMutation.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={addQuestionMutation.isPending}
-                >
-                  {addQuestionMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    'Add Question'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Question Modal */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Question</DialogTitle>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-              <div>
-                <Label>Associated Jobs:</Label>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {currentQuestion?.jobTitles?.join(', ') || 'No jobs associated'}
-                </div>
-              </div>
-
-              <FormField
-                control={editForm.control}
-                name="question"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Question</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={editForm.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Question Type</FormLabel>
-                    <Select
-                      options={questionTypeOptions}
-                      onChange={(selected) => field.onChange(selected?.value)}
-                      value={questionTypeOptions.find(opt => opt.value === field.value)}
-                      isLoading={editQuestionMutation.isPending}
-                      isDisabled={editQuestionMutation.isPending}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {editShowOptions && (
-                <div className="space-y-2">
-                  <FormLabel>Options</FormLabel>
-                  <div className="flex gap-2">
-                    <Input
-                      value={editOptionInput}
-                      onChange={(e) => setEditOptionInput(e.target.value)}
-                      placeholder="Enter an option"
-                      disabled={editQuestionMutation.isPending}
-                    />
-                    <Button type="button" onClick={() => handleAddOption(true)}>
-                      Add
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {editOptions.map((option, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span>{option}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveOption(index, true)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <FormField
-                control={editForm.control}
-                name="required"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between">
-                    <FormLabel>Required</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={editForm.control}
-                name="jobIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Associated Jobs</FormLabel>
-                    <FormControl>
-                      <Select
-                        isMulti
-                        options={jobOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        className="react-select-container"
-                        classNamePrefix="react-select"
-                        placeholder="Select associated jobs..."
-                        isClearable
-                        isSearchable
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={editQuestionMutation.isPending}
-                >
-                  {editQuestionMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      <EditQuestionModal
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        questionId={currentQuestion?.id}
+        onSubmit={onEditSubmit}
+        isLoading={editQuestionMutation.isPending}
+        jobOptions={jobOptions}
+        showOptions={editShowOptions}
+        options={editOptions}
+        optionInput={editOptionInput}
+        handleAddOption={handleAddOption}
+        handleRemoveOption={handleRemoveOption}
+        handleTypeChange={handleEditTypeChange}
+        setEditOptionInput={setEditOptionInput}
+        setEditOptions={setEditOptions}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

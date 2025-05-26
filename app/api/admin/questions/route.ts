@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
-import { JobQuestion, JobPosting } from "@/prisma/mongodb-schema";
+import { JobPosting } from '@/models/jobPosting';
+import { JobQuestion } from '@/models/jobQuestion';
 import mongoose from 'mongoose';
+import { z } from 'zod';
 
 interface IQuestionResponse {
   _id: string;
@@ -54,6 +56,13 @@ interface IPopulatedQuestionResponse extends mongoose.Document {
   };
 }
 
+const questionSchema = z.object({
+  jobId: z.string().refine(val => {
+    const trimmed = val.trim();
+    return mongoose.isValidObjectId(trimmed);
+  }, "Invalid job ID format")
+});
+
 export async function GET() {
   try {
     await connectToDatabase();
@@ -88,6 +97,18 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
+    // Add type-specific validation
+    if (['select', 'radio'].includes(body.type) && (!body.options || body.options.length === 0)) {
+      return NextResponse.json(
+        { error: "Options are required for this question type" },
+        { status: 400 }
+      );
+    }
+    
+    if (body.type === 'boolean') {
+      body.options = ['Yes', 'No']; // Force boolean options
+    }
+
     // Validate request body
     if (!body.question?.trim()) {
       return NextResponse.json(
@@ -96,24 +117,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Add validation for option-based questions
-    if (['select', 'radio'].includes(body.type)) {
-      if (!body.options?.length) {
-        return NextResponse.json(
-          { error: "Options are required for this question type" },
-          { status: 400 }
-        );
-      }
-    }
-
     await connectToDatabase();
     
     // Get all job IDs if availableForAllJobs is true
-    const validJobIds = body.jobIds
-      ? body.jobIds
-          .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
-          .map(id => new mongoose.Types.ObjectId(id))
-      : [];
+    const jobId = (body.jobIds || []).map(id => id.trim());
+    const validJobIds = jobId
+      .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
+      .map(id => new mongoose.Types.ObjectId(id));
 
     // Create question
     const question = await JobQuestion.create({

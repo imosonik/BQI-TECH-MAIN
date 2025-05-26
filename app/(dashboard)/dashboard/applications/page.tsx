@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import DataTable from "@/components/admin/DataTable";
 import { Application } from "@/types/application";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
@@ -32,11 +31,14 @@ export default function ApplicationsPage() {
 
   const applications = data?.applications || [];
 
-  const filteredApplications = applications.filter(app =>
-    app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredApplications = applications.filter(app => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (app.name?.toLowerCase() ?? '').includes(search) ||
+      (app.email?.toLowerCase() ?? '').includes(search) ||
+      (app.position?.toLowerCase() ?? '').includes(search)
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -50,21 +52,68 @@ export default function ApplicationsPage() {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-      <DataTable
-        columns={[
-          { header: "Name", accessor: "name" },
-          { header: "Email", accessor: "email" },
-          { header: "Phone Number", accessor: "phoneNumber" },
-          { header: "Position", accessor: "position" },
-          { header: "Application Date", accessor: "appliedDate" },
-          { header: "Status", accessor: "status" },
-          { header: "COTS Experience", accessor: "cotsExperience" },
-          { header: "SQL/JS Experience", accessor: "sqlJavaScriptExperience" },
-          { header: "Report Dev Experience", accessor: "reportDevelopmentExperience" }
-        ]}
-        data={filteredApplications}
-        onView={handleView}
-      />
+      <div className="overflow-x-auto rounded-lg border shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredApplications.map((app) => {
+              const firstName = app.answers?.find(a => 
+                a.questionText.toLowerCase().includes('first name')
+              )?.answer || '';
+              const lastName = app.answers?.find(a => 
+                a.questionText.toLowerCase().includes('last name')
+              )?.answer || '';
+              
+              return (
+                <tr key={app.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {app.name || `${firstName} ${lastName}`.trim() || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {app.email?.toLowerCase() || 
+                     app.answers?.find(a => a.questionText.toLowerCase().includes('email'))?.answer || 
+                     'Not provided'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {app.phoneNumber || 
+                     app.answers?.find(a => a.questionText.toLowerCase().includes('phone'))?.answer || 
+                     'Not provided'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {app.position || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {app.status || 'Pending'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {app.appliedDate ? new Date(app.appliedDate).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button
+                      onClick={() => handleView(app.id)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
       <ViewApplicationModal
         application={viewApplication}
         isOpen={!!viewApplication}

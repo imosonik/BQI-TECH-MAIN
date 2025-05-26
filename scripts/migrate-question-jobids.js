@@ -11,9 +11,10 @@ async function migrateJobIds() {
     
     for (const question of questions) {
       const validJobIds = [];
-      for (const id of question.jobIds) {
-        // Handle string representations of ObjectIDs
-        if (typeof id === 'string' && mongoose.isValidObjectId(id)) {
+      for (const rawId of question.jobIds) {
+        const id = String(rawId).trim();
+        
+        if (mongoose.isValidObjectId(id)) {
           validJobIds.push(new mongoose.Types.ObjectId(id));
         } 
         // Handle nested objects from previous population

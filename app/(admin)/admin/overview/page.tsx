@@ -1,13 +1,12 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { Users, FileText, CheckCircle, XCircle, UserCheck, Code, MessageSquare, ArrowRight, Calendar, ChevronRight, Bell } from 'lucide-react';
+import { Users, FileText, CheckCircle, XCircle, UserCheck, Code, MessageSquare, ArrowRight, Calendar, ChevronRight, Bell, Ban } from 'lucide-react';
 import useSWR from 'swr';
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
-import { UserButton } from "@clerk/nextjs"
+import { useSession } from "next-auth/react"
 import { NotificationButton } from "@/components/NotificationButton"
-import { useUser } from "@clerk/nextjs"
 import Link from "next/link";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 
@@ -43,7 +42,7 @@ interface Application {
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { user } = useUser()
+  const { data: session } = useSession()
   
   const { data: overviewData, error: overviewError, isLoading: isOverviewLoading } = 
     useSWR('/api/admin/overview', overviewFetcher);
@@ -208,10 +207,11 @@ function getStatusColor(status: string) {
   switch (status) {
     case "New": return "bg-blue-100 text-blue-600";
     case "Shortlisted": return "bg-green-100 text-green-600";
-    case "Technical": return "bg-yellow-100 text-yellow-600";
-    case "Interview": return "bg-purple-100 text-purple-600";
+    case "Technical Assessment": return "bg-yellow-100 text-yellow-600";
+    case "Interviewing": return "bg-purple-100 text-purple-600";
     case "Hired": return "bg-indigo-100 text-indigo-600";
     case "Rejected": return "bg-red-100 text-red-600";
+    case "Disqualified": return "bg-pink-100 text-pink-600";
     default: return "bg-gray-100 text-gray-600";
   }
 }
@@ -220,10 +220,11 @@ function getStatusIcon(status: string) {
   switch (status) {
     case "New": return <FileText className="w-5 h-5" />;
     case "Shortlisted": return <CheckCircle className="w-5 h-5" />;
-    case "Technical": return <Code className="w-5 h-5" />;
-    case "Interview": return <MessageSquare className="w-5 h-5" />;
+    case "Technical Assessment": return <Code className="w-5 h-5" />;
+    case "Interviewing": return <MessageSquare className="w-5 h-5" />;
     case "Hired": return <UserCheck className="w-5 h-5" />;
     case "Rejected": return <XCircle className="w-5 h-5" />;
+    case "Disqualified": return <Ban className="w-5 h-5" />;
     default: return <FileText className="w-5 h-5" />;
   }
 }

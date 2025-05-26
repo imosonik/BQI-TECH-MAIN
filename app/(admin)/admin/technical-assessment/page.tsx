@@ -25,8 +25,8 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function TechnicalAssessmentPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, error, isLoading } = useSWR<{ applications: TechnicalAssessmentApplication[] }>(
-    "/api/admin/applications?status=Technical Assessment",
+  const { data, error, isLoading, mutate } = useSWR<TechnicalAssessmentApplication[]>(
+    "/api/admin/technical-assessment",
     fetcher
   );
 
@@ -35,12 +35,12 @@ export default function TechnicalAssessmentPage() {
   const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
 
   const handleView = (id: string) => {
-    const application = data?.applications.find((app: TechnicalAssessmentApplication) => app.id === id);
+    const application = data?.find((app: TechnicalAssessmentApplication) => app.id === id);
     setViewApplication(application || null);
   };
 
   const handleEdit = (id: string) => {
-    const application = data?.applications.find((app: TechnicalAssessmentApplication) => app.id === id);
+    const application = data?.find((app: TechnicalAssessmentApplication) => app.id === id);
     setEditApplication(application || null);
   };
 
@@ -49,12 +49,6 @@ export default function TechnicalAssessmentPage() {
   };
 
   const handleSaveEdit = async (updatedApplication: Application) => {
-    const typedApplication = updatedApplication as TechnicalAssessmentApplication;
-    if (!typedApplication.technicalAssessmentDate) {
-      console.error('Assessment date is required');
-      return;
-    }
-    
     try {
       await fetch(`/api/admin/applications/${updatedApplication.id}`, {
         method: "PUT",
@@ -62,6 +56,7 @@ export default function TechnicalAssessmentPage() {
         body: JSON.stringify(updatedApplication),
       });
       setEditApplication(null);
+      mutate();
     } catch (error) {
       console.error("Failed to update application:", error);
     }
@@ -76,11 +71,11 @@ export default function TechnicalAssessmentPage() {
     }
   };
 
-  const filteredData = data?.applications.filter((app: TechnicalAssessmentApplication) =>
+  const filteredData = (data ?? []).filter((app: TechnicalAssessmentApplication) =>
     Object.values(app).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
-  ) ?? [];
+  );
 
   if (error) return <div>Failed to load technical assessment candidates</div>;
   if (isLoading) return <div>Loading...</div>;

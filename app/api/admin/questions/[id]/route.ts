@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
-import { JobQuestion } from "@/prisma/mongodb-schema";
 import mongoose from 'mongoose';
-import { JobPosting } from "@/prisma/mongodb-schema";
+import { JobQuestion } from '@/models/job-question';
+import { JobPosting } from '@/models/jobPosting';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,13 @@ interface PopulatedQuestion {
   _id: mongoose.Types.ObjectId;
   jobIds: Array<{ _id: mongoose.Types.ObjectId; title: string }>;
   __v: number;
-  // ... other question properties
+  question: string;
+  type: string;
+  required: boolean;
+  options: string[];
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export async function GET(
@@ -47,13 +53,27 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    await connectToDatabase();
     
+    // Ensure database connection
+    await connectToDatabase();
+
     if (!params?.id || !mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json(
         { error: "Valid Question ID is required" },
         { status: 400 }
       );
+    }
+
+    // Validate first
+    if (body.type === 'boolean') {
+      body.options = ['Yes', 'No'];
+    } else if (['select', 'radio'].includes(body.type)) {
+      if (!body.options || body.options.length === 0) {
+        return NextResponse.json(
+          { error: "Options are required for this question type" },
+          { status: 400 }
+        );
+      }
     }
 
     const validJobIds = body.jobIds
@@ -66,12 +86,12 @@ export async function PUT(
       question: body.question,
       type: body.type,
       required: body.required,
-      options: body.options || [],
+      options: body.type === 'boolean' ? ['Yes', 'No'] : body.options || [],
       jobIds: validJobIds,
       updatedAt: new Date()
     };
 
-    const question = await JobQuestion.findByIdAndUpdate(
+    const updatedQuestion = await JobQuestion.findByIdAndUpdate(
       params.id,
       { $set: updateData },
       { 
@@ -80,42 +100,31 @@ export async function PUT(
       }
     ).populate('jobIds', '_id title');
     
-    if (!question) {
+    if (!updatedQuestion) {
       return NextResponse.json(
         { error: "Question not found" },
         { status: 404 }
       );
     }
     
-    if (validJobIds.length > 0) {
-      await JobPosting.updateMany(
-        { _id: { $in: validJobIds } },
-        { $addToSet: { questions: new mongoose.Types.ObjectId(params.id) } }
-      );
-      
-      const currentQuestion = await JobQuestion.findById(params.id);
-      if (!currentQuestion) {
-        return NextResponse.json(
-          { error: "Question not found" },
-          { status: 404 }
-        );
-      }
+    // Get previous and new job IDs
+    const previousJobIds = updatedQuestion?.jobIds.map(id => id.toString()) || [];
+    const newJobIds = validJobIds.map(id => id.toString());
 
-      const previousJobIds = currentQuestion.jobIds?.map(id => id.toString()) || [];
-      const removedJobs = previousJobIds.filter(id => 
-        !validJobIds.some(vId => vId.toString() === id)
-      );
-      
-      await JobPosting.updateMany(
-        { _id: { $in: removedJobs } },
-        { $pull: { questions: new mongoose.Types.ObjectId(params.id) } }
-      );
-    } else {
-      await JobPosting.updateMany(
-        { questions: new mongoose.Types.ObjectId(params.id) },
-        { $pull: { questions: new mongoose.Types.ObjectId(params.id) } }
-      );
-    }
+    // Find jobs to add and remove
+    const jobsToAdd = newJobIds.filter(id => !previousJobIds.includes(id));
+    const jobsToRemove = previousJobIds.filter(id => !newJobIds.includes(id));
+
+    // Update job postings
+    await JobPosting.updateMany(
+      { _id: { $in: jobsToAdd } },
+      { $addToSet: { questions: params.id } }
+    );
+
+    await JobPosting.updateMany(
+      { _id: { $in: jobsToRemove } },
+      { $pull: { questions: params.id } }
+    );
 
     // Transform response
     const populatedQuestion = await JobQuestion.findById(params.id)
@@ -148,6 +157,14 @@ export async function DELETE(
 ) {
   try {
     await connectToDatabase();
+    
+    // Remove question from associated jobs
+    await JobPosting.updateMany(
+      { questions: params.id },
+      { $pull: { questions: params.id } }
+    );
+    
+    // Delete the question
     await JobQuestion.findByIdAndDelete(params.id);
     
     return NextResponse.json({ message: "Question deleted successfully" });

@@ -59,7 +59,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       success: true,
-      applicationId
+      applicationId,
+      message: 'Application submitted successfully. Check your email for confirmation.'
     });
 
   } catch (error) {
