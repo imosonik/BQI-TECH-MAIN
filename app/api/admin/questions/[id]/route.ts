@@ -108,7 +108,7 @@ export async function PUT(
     }
     
     // Get previous and new job IDs
-    const previousJobIds = updatedQuestion?.jobIds.map(id => id.toString()) || [];
+    const previousJobIds = updatedQuestion.jobIds.map(job => job._id.toString()) || [];
     const newJobIds = validJobIds.map(id => id.toString());
 
     // Find jobs to add and remove
@@ -118,12 +118,12 @@ export async function PUT(
     // Update job postings
     await JobPosting.updateMany(
       { _id: { $in: jobsToAdd } },
-      { $addToSet: { questions: params.id } }
+      { $addToSet: { questions: new mongoose.Types.ObjectId(params.id) } }
     );
 
     await JobPosting.updateMany(
       { _id: { $in: jobsToRemove } },
-      { $pull: { questions: params.id } }
+      { $pull: { questions: new mongoose.Types.ObjectId(params.id) } }
     );
 
     // Transform response
