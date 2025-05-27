@@ -134,7 +134,7 @@ export async function PUT(
     const response = {
       ...populatedQuestion,
       id: populatedQuestion._id.toString(),
-      jobIds: populatedQuestion.jobIds.map(id => id.toString()),
+      jobIds: populatedQuestion.jobIds.map(job => job._id.toString()),
       jobTitles: populatedQuestion.jobIds.map(job => job.title)
     };
 
