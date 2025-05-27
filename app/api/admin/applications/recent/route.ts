@@ -10,6 +10,8 @@ export async function GET() {
     const applications = await Application.find({
       answers: { $exists: true, $not: { $size: 0 } }
     })
+    .sort({ appliedDate: -1 })
+    .limit(5)
     .populate({
       path: 'jobId',
       select: 'title',
