@@ -93,63 +93,52 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
+    const body = await req.json();
     
-    // Add type-specific validation
-    if (['select', 'radio'].includes(body.type) && (!body.options || body.options.length === 0)) {
-      return NextResponse.json(
-        { error: "Options are required for this question type" },
-        { status: 400 }
-      );
-    }
-    
-    if (body.type === 'boolean') {
-      body.options = ['Yes', 'No']; // Force boolean options
-    }
-
     // Validate request body
-    if (!body.question?.trim()) {
+    const schema = z.object({
+      question: z.string().min(1),
+      type: z.enum(['text', 'select', 'radio', 'boolean', 'file']),
+      required: z.boolean(),
+      options: z.array(z.string()).optional(),
+      jobIds: z.array(z.string().refine(val => mongoose.isValidObjectId(val))),
+      order: z.number().min(0)
+    });
+
+    const validation = schema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Question text is required" },
+        { error: validation.error.flatten() },
         { status: 400 }
       );
     }
 
     await connectToDatabase();
-    
-    // Get all job IDs if availableForAllJobs is true
-    const jobId = (body.jobIds || []).map(id => id.trim());
-    const validJobIds = jobId
-      .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
-      .map(id => new mongoose.Types.ObjectId(id));
 
-    // Create question
-    const question = await JobQuestion.create({
-      question: body.question,
-      type: body.type,
-      options: body.options || [],
-      required: body.required || false,
-      order: body.order || 0,
-      jobIds: validJobIds,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    // Convert jobIds to ObjectId
+    const jobIds = validation.data.jobIds.map(id => new mongoose.Types.ObjectId(id));
+
+    // Create new question
+    const newQuestion = await JobQuestion.create({
+      ...validation.data,
+      jobIds: jobIds,
+      options: validation.data.options || []
     });
 
-    // Update all associated jobs
-    if (validJobIds.length > 0) {
-      await JobPosting.updateMany(
-        { _id: { $in: validJobIds } },
-        { $addToSet: { questions: question._id } }
-      );
-    }
+    // Update associated jobs
+    await JobPosting.updateMany(
+      { _id: { $in: jobIds } },
+      { $push: { questions: newQuestion._id } }
+    );
 
     return NextResponse.json({
-      ...question.toObject(),
-      id: question._id.toString(),
-      jobIds: validJobIds.map(id => id.toString())
-    });
+      ...newQuestion.toObject(),
+      id: newQuestion._id.toString(),
+      jobIds: validation.data.jobIds
+    }, { status: 201 });
+
   } catch (error) {
     console.error("Failed to create question:", error);
     return NextResponse.json(

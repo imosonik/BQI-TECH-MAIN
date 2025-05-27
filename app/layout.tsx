@@ -6,6 +6,7 @@ import { ReactNode } from 'react'
 import { SessionProvider } from "next-auth/react"
 import { metadata } from './metadata'
 import { usePathname } from 'next/navigation'
+import { Toaster } from "react-hot-toast"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,6 +28,16 @@ export default function RootLayout({
           <ClientWrapper>
             {children}
           </ClientWrapper>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: '#fff',
+                color: '#374151',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          />
         </body>
       </html>
     </SessionProvider>

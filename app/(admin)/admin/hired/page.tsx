@@ -1,50 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
-import DataTable from "@/components/admin/DataTable";
+import { HiredTable } from "@/components/admin/HiredTable";
 import useSWR from "swr";
 import { EditApplicationModal } from "@/components/admin/EditApplicationModal";
 import { ViewApplicationModal } from "@/components/admin/ViewApplicationModal";
 import { DeleteApplicationModal } from "@/components/admin/DeleteApplicationModal";
 import { Application } from "@/types/application";
 
-interface HiredApplication extends Application {
-  hireDate: string;
-  startDate: string;
-  salary: string;
-}
-
-const columns = [
-  { header: "Name", accessor: "name" },
-  { header: "Email", accessor: "email" },
-  { header: "Position", accessor: "position" },
-  { header: "Hire Date", accessor: "hireDate" },
-  { header: "Start Date", accessor: "startDate" },
-  { header: "Salary", accessor: "salary" },
-  { header: "Status", accessor: "status" },
-];
-
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function HiredPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, error, isLoading } = useSWR<HiredApplication[]>(
-    "/api/admin/applications?status=Hired",
+  const { data, error, isLoading, mutate } = useSWR<Application[]>(
+    "/api/admin/hired",
     fetcher
   );
-
-  const [viewApplication, setViewApplication] = useState<HiredApplication | null>(null);
+  const [viewApplication, setViewApplication] = useState<Application | null>(null);
   const [editApplication, setEditApplication] = useState<Application | null>(null);
   const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
+  const [jobTitles, setJobTitles] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchJobTitles = async () => {
+      try {
+        const response = await fetch('/api/admin/jobs');
+        const jobs = await response.json();
+        const titles = jobs.reduce((acc: Record<string, string>, job: any) => {
+          acc[job.id] = job.title;
+          return acc;
+        }, {});
+        setJobTitles(titles);
+      } catch (error) {
+        console.error('Failed to fetch job titles:', error);
+      }
+    };
+    fetchJobTitles();
+  }, []);
 
   const handleView = (id: string) => {
-    const application = data?.find((app: HiredApplication) => app.id === id);
+    const application = data?.find((app: Application) => app.id === id);
     setViewApplication(application || null);
   };
 
   const handleEdit = (id: string) => {
-    const application = data?.find((app: HiredApplication) => app.id === id);
+    const application = data?.find((app: Application) => app.id === id);
     setEditApplication(application || null);
   };
 
@@ -60,6 +61,7 @@ export default function HiredPage() {
         body: JSON.stringify(updatedApplication),
       });
       setEditApplication(null);
+      mutate();
     } catch (error) {
       console.error("Failed to update application:", error);
     }
@@ -69,12 +71,13 @@ export default function HiredPage() {
     try {
       await fetch(`/api/admin/applications/${id}`, { method: "DELETE" });
       setDeleteApplicationId(null);
+      mutate();
     } catch (error) {
       console.error("Failed to delete application:", error);
     }
   };
 
-  const filteredData = (data ?? []).filter((app: HiredApplication) =>
+  const filteredData = (Array.isArray(data) ? data : []).filter((app: Application) =>
     Object.values(app).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -91,12 +94,18 @@ export default function HiredPage() {
       onSearch={setSearchTerm}
     >
       <div className="overflow-x-auto">
-        <DataTable
-          columns={columns}
-          data={filteredData}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+        <HiredTable
+          applications={filteredData}
+          jobTitles={jobTitles}
+          onView={(id) => {
+            const application = data?.find((app) => app.id === id);
+            setViewApplication(application || null);
+          }}
+          onEdit={(id) => {
+            const application = data?.find((app) => app.id === id);
+            setEditApplication(application || null);
+          }}
+          onDelete={(id) => setDeleteApplicationId(id)}
         />
       </div>
 

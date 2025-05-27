@@ -4,7 +4,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
-
+import ReactSelect from 'react-select';
 import { Label } from "@/components/ui/label";
 import {
   Select,

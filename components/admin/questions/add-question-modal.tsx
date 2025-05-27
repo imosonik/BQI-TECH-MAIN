@@ -30,7 +30,10 @@ import { useMutation, QueryObserverResult, RefetchOptions } from "@tanstack/reac
 import toast from 'react-hot-toast';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { Badge } from "@/components/ui/badge";
+import { Combobox } from "@/components/ui/combobox";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -56,7 +59,7 @@ interface AddQuestionModalProps {
 interface QuestionFormValues {
   jobIds: string[];
   question: string;
-  type: "text" | "select" | "radio" | "file";
+  type: "text" | "select" | "radio" | "boolean" | "file";
   required: boolean;
   options: string[];
   order: number;
@@ -243,6 +246,7 @@ export function AddQuestionModal({
                                 <SelectItem value="text">Text Input</SelectItem>
                                 <SelectItem value="select">Dropdown</SelectItem>
                                 <SelectItem value="radio">Multiple Choice</SelectItem>
+                                <SelectItem value="boolean">Yes/No Toggle</SelectItem>
                                 <SelectItem value="file">File Upload</SelectItem>
                               </SelectContent>
                             </Select>
