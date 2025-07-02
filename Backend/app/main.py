@@ -5,6 +5,10 @@ import uvicorn
 import logging
 from contextlib import asynccontextmanager
 import datetime
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .database import connect_to_database, close_database_connection, get_database, is_connected
 from .config import settings
@@ -47,6 +51,9 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down...")
     await close_database_connection()
 
+# Create rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Create FastAPI app with lifespan
 app = FastAPI(
     title="BQI Tech HR API",
@@ -55,16 +62,64 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Add rate limiting middleware
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
+# Add security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    if settings.enable_security_headers:
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # Enable XSS protection
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        # Referrer policy
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        
+        # Content Security Policy (adjust as needed)
+        if settings.is_production:
+            response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    
+    return response
+
+# Response obfuscation middleware
+@app.middleware("http")
+async def obfuscate_responses(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Only obfuscate API responses in production
+    if settings.is_production and request.url.path.startswith("/api/"):
+        # Add random headers to make responses look like regular web traffic
+        response.headers["X-Cache-Status"] = "MISS" if hash(str(request.url)) % 2 else "HIT"
+        response.headers["X-Response-Time"] = f"{hash(str(request.url)) % 100 + 50}ms"
+        response.headers["X-Server-ID"] = f"srv-{hash(str(request.url)) % 10 + 1:02d}"
+        
+        # Remove server identification
+        response.headers.pop("server", None)
+        
+        # Add generic content type variations
+        if "application/json" in response.headers.get("content-type", ""):
+            response.headers["content-type"] = "application/json; charset=utf-8"
+    
+    return response
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         settings.frontend_url,
         "http://localhost:3000",
-        "http://localhost:10000",
+        "http://localhost:9000",
         "https://bqitech.com",
         "https://bqitech-nonprod.netlify.app",
         "https://www.bqitech-nonprod.netlify.app"
+       
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -141,7 +196,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=10000,  # Updated to match NEXT_PUBLIC_PYTHON_API_URL
+        port=9000,  # Match NEXT_PUBLIC_PYTHON_API_URL
         reload=True,
         log_level="info",
         access_log=False,

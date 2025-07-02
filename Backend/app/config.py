@@ -9,7 +9,7 @@ load_dotenv()
 class Settings(BaseModel):
     # Server Configuration
     host: str = "0.0.0.0"
-    port: int = int(os.getenv("PORT", "10000"))
+    port: int = int(os.getenv("PORT", "9000"))
     debug: bool = False
     
     # Database
@@ -28,10 +28,25 @@ class Settings(BaseModel):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     algorithm: str = os.getenv("ALGORITHM", "HS256")
     
+    # Production/Development Mode
+    is_production: bool = os.getenv("NODE_ENV", "development") == "production"
+    api_base_path: str = os.getenv("API_BASE_PATH", "/api")
+    
+    # Security Headers
+    enable_security_headers: bool = True
+    
+    # Response Obfuscation
+    obfuscate_responses: bool = os.getenv("OBFUSCATE_RESPONSES", "false").lower() == "true"
+    response_encoding: str = os.getenv("RESPONSE_ENCODING", "none")  # none, base64, gzip
+    
+    # Response Encryption
+    encrypt_responses: bool = os.getenv("ENCRYPT_RESPONSES", "false").lower() == "true"
+    encryption_master_key: str = os.getenv("ENCRYPTION_MASTER_KEY", "")
+    
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
-        "http://localhost:10000",
+        "http://localhost:9000",
         "https://bqitech.com",
         "https://bqitech-nonprod.netlify.app",
         "https://www.bqitech-nonprod.netlify.app"

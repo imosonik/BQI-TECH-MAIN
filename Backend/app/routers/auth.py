@@ -12,11 +12,16 @@ import json
 import os
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 class LoginCredentials(BaseModel):
     email: str
@@ -26,6 +31,7 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 @router.post("/login")
+@limiter.limit("5/minute")
 async def login(
     request: Request,
     credentials: OAuth2PasswordRequestForm = Depends()
@@ -123,7 +129,9 @@ async def options_login(request: Request):
     )
 
 @router.post("/signup")
+@limiter.limit("3/minute")
 async def signup(
+    request: Request,
     email: str = Form(...),
     password: str = Form(...),
     name: str = Form(...)
@@ -428,6 +436,7 @@ async def auth_log(log_data: Dict[str, Any] = Body(...)):
         return {"success": False, "error": str(e)}
 
 @router.post("/verify-email")
+@limiter.limit("10/minute")
 async def verify_email(
     request: Request,
     email: str = Body(...),
@@ -474,14 +483,18 @@ async def verify_email(
         
         return {"message": "Email verified successfully"}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Email verification error: {e}")
+        logger.error(f"Email verification error: {str(e)}")
+        logger.exception("Full traceback:")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
 
 @router.post("/send-verification-code")
+@limiter.limit("5/minute")
 async def send_verification_code_endpoint(
     request: Request,
     email: str = Body(...)
@@ -517,8 +530,11 @@ async def send_verification_code_endpoint(
         
         return {"message": "Verification code sent successfully"}
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Send verification code error: {e}")
+        logger.error(f"Send verification code error: {str(e)}")
+        logger.exception("Full traceback:")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

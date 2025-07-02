@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse
 from app.auth import get_current_user, verify_password, get_password_hash
 from app.database import get_database
 from app.models.user import UserProfile, PasswordChange
+from app.lib.response_obfuscator import obfuscate_user_profile, ResponseObfuscator
+from app.lib.encryption import encrypt_user_response, should_encrypt_response
 from typing import Dict, Any, Optional
 from bson import ObjectId
 from datetime import datetime
@@ -68,8 +70,14 @@ async def get_user_profile(
             "isEmailVerified": user.get("isEmailVerified", False)
         }
         
+        # Apply encryption if enabled, otherwise obfuscation
+        if should_encrypt_response():
+            processed_profile = encrypt_user_response(profile, str(current_user["_id"]))
+        else:
+            processed_profile = obfuscate_user_profile(profile)
+        
         return JSONResponse(
-            content=profile,
+            content=processed_profile,
             headers={
                 "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
                 "Access-Control-Allow-Credentials": "true",

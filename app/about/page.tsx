@@ -44,13 +44,19 @@ const leadership = [
 
 const team = [
   {
+    name: "Ezra Yego",
+    role: "Chief Executive Officer",
+    image: "/Teams/ezra-yego.jpg",
+    social: {
+      linkedin: "#",
+    }
+  },
+  {
     name: "Lynn Sugut",
     role: "Chief Technology Officer",
- 
     image: "/Teams/lynn 2 1.jpg",
     social: {
       linkedin: "#",
-     
     }
   },
   {
@@ -120,7 +126,7 @@ const team = [
   },
   {
     name: "Nigel Watunu",
-    role: "Operations",
+    role: "Operations and Strategic Initiatives Associate",
     image: "/Teams/Nigel.jpg",
     social: {
       linkedin: "#",
@@ -300,11 +306,17 @@ export default function AboutPage() {
           </motion.div>
 
           {/* Team Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 relative z-10">
             {team.map((member, index) => (
               <motion.div 
                 key={member.name}
-                className={`group relative ${index === team.length - 1 && team.length % 4 !== 0 ? 'xl:col-start-2 xl:col-end-4 xl:justify-self-center xl:w-full xl:max-w-[280px]' : ''}`}
+                className={`group relative w-full max-w-[280px] ${
+                  member.name === 'Felix Ronoh'
+                    ? 'lg:col-start-2'
+                    : member.name === 'Nigel Watunu'
+                    ? 'lg:col-start-3'
+                    : ''
+                }`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}

@@ -1,3 +1,6 @@
+import { ResponseDecoder } from './response-decoder';
+import { ResponseDecryption } from './encryption-decoder';
+
 interface User {
   id: string;
   _id?: string;
@@ -109,6 +112,23 @@ class AuthService {
     }
   }
 
+  // Decode/Decrypt API response if encoded or encrypted
+  private async decodeResponse(response: Response, userId?: string): Promise<any> {
+    if (response.headers.get('content-type')?.includes('application/json')) {
+      const data = await response.json();
+      
+      // First try decryption (for encrypted responses)
+      try {
+        const decrypted = await ResponseDecryption.decrypt(data, userId);
+        return decrypted;
+      } catch (error) {
+        // If decryption fails, try obfuscation decoding
+        return ResponseDecoder.decode(data);
+      }
+    }
+    return response;
+  }
+
   // Login with email and password
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
@@ -134,7 +154,14 @@ class AuthService {
         throw new Error(error.detail || 'Login failed');
       }
 
-      const data: AuthResponse = await response.json();
+      const rawData = await response.json();
+      // Try decryption first, then obfuscation decoding
+      let data: AuthResponse;
+      try {
+        data = await ResponseDecryption.decrypt(rawData);
+      } catch (error) {
+        data = ResponseDecoder.decode(rawData);
+      }
       console.log('Login response:', data);
       
       if (!data.access_token || !data.refresh_token || !data.user) {
@@ -254,7 +281,14 @@ class AuthService {
         return null;
       }
 
-      const data = await response.json();
+      const rawData = await response.json();
+      // Try decryption first, then obfuscation decoding
+      let data;
+      try {
+        data = await ResponseDecryption.decrypt(rawData);
+      } catch (error) {
+        data = ResponseDecoder.decode(rawData);
+      }
       console.log('Token refresh successful:', data);
       
       if (!data.access_token || !data.refresh_token) {
@@ -307,22 +341,27 @@ class AuthService {
     return session?.token ? { Authorization: `Bearer ${session.token}` } : {};
   }
 
+      // Authenticated fetch with automatic token refresh
   async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
-    console.log('Making authenticated request to:', url);
     const session = this.getSession();
     
     if (!session?.token) {
-      console.error('No authentication token available');
       throw new Error('No authentication token');
     }
 
+    // Add security headers to obfuscate API calls
     const headers = {
-      ...options.headers,
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.token}`,
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-Client-Version': '2.4.0',
+      'X-Request-ID': Math.random().toString(36).substr(2, 9),
+      'Accept': 'application/json, text/plain, */*',
+      'Cache-Control': 'no-cache',
+      ...((options.headers as Record<string, string>) || {})
     };
 
-    console.log('Request headers:', headers);
-
+    // First attempt with current token
     try {
       const response = await fetch(url, {
         ...options,
@@ -330,33 +369,39 @@ class AuthService {
         credentials: 'include',
       });
 
-      console.log('Response status:', response.status);
-
-      if (response.status === 401) {
-        console.log('Token expired, attempting refresh');
-        // Token expired, try to refresh
-        const refreshResult = await this.refreshToken();
-        if (!refreshResult) {
-          console.error('Token refresh failed');
-          throw new Error('Token refresh failed');
-        }
-
-        // Retry with new token
-        const newSession = this.getSession();
-        console.log('Retrying request with new token');
-        return fetch(url, {
-          ...options,
-          headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${newSession!.token}`,
-          },
-          credentials: 'include',
-        });
+      // If token is valid, return response
+      if (response.ok || response.status !== 401) {
+        return response;
       }
 
-      return response;
+      // If 401, try to refresh token
+      console.log('Token expired, attempting refresh...');
+      const refreshResult = await this.refreshToken();
+      
+      if (!refreshResult) {
+        console.log('Token refresh failed, clearing session');
+        this.clearSession();
+        throw new Error('Authentication failed');
+      }
+
+      // Retry with new token
+      const newHeaders = {
+        ...headers,
+        'Authorization': `Bearer ${refreshResult.access_token}`
+      };
+
+      return await fetch(url, {
+        ...options,
+        headers: newHeaders,
+        credentials: 'include',
+      });
+
     } catch (error) {
       console.error('Authenticated fetch error:', error);
+      // Don't clear session on network errors, only on auth errors
+      if (error instanceof Error && error.message.includes('authentication')) {
+        this.clearSession();
+      }
       throw error;
     }
   }
@@ -373,7 +418,16 @@ class AuthService {
       const response = await this.authenticatedFetch(`${BACKEND_URL}/api/users/profile`);
       
       if (response.ok) {
-        const profileData = await response.json();
+        const rawProfileData = await response.json();
+        // Try decryption with user ID first, then obfuscation decoding
+        let profileData;
+        try {
+          const currentSession = this.getSession();
+          const userId = currentSession?.user?.id;
+          profileData = await ResponseDecryption.decrypt(rawProfileData, userId);
+        } catch (error) {
+          profileData = ResponseDecoder.decode(rawProfileData);
+        }
         
         // Update session with new profile data
         const currentSession = this.getSession();
