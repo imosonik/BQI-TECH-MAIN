@@ -130,6 +130,8 @@ async def signup(
 ):
     """User registration endpoint"""
     try:
+        from app.lib.email import send_verification_code
+        
         db = get_database()
         
         # Normalize email to lowercase
@@ -164,9 +166,20 @@ async def signup(
         # Insert user into database
         result = await db.users.insert_one(user_data)
         
+        # Send verification email
+        try:
+            verification_code = await send_verification_code(email)
+            if verification_code:
+                logger.info(f"Verification email sent to {email}")
+            else:
+                logger.warning(f"Failed to send verification email to {email}")
+        except Exception as e:
+            logger.error(f"Error sending verification email to {email}: {str(e)}")
+            # Don't fail the signup if email sending fails
+        
         logger.info(f"New user registered: {email}")
         return {
-            "message": "User created successfully",
+            "message": "User created successfully. Please check your email for verification code.",
             "user_id": str(result.inserted_id)
         }
         
@@ -422,6 +435,8 @@ async def verify_email(
 ):
     """Verify user's email address"""
     try:
+        from app.lib.email import verify_code
+        
         db = get_database()
         
         # Find user
@@ -432,8 +447,15 @@ async def verify_email(
                 detail="User not found"
             )
         
-        # Verify code (you'll need to implement your verification logic here)
-        # For now, we'll just mark the email as verified
+        # Verify the code
+        is_valid = await verify_code(email, code)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification code"
+            )
+        
+        # Mark email as verified
         result = await db.users.update_one(
             {"_id": user["_id"]},
             {
@@ -454,6 +476,49 @@ async def verify_email(
         
     except Exception as e:
         logger.error(f"Email verification error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+@router.post("/send-verification-code")
+async def send_verification_code_endpoint(
+    request: Request,
+    email: str = Body(...)
+):
+    """Send verification code to email"""
+    try:
+        from app.lib.email import send_verification_code
+        
+        db = get_database()
+        
+        # Find user
+        user = await db.users.find_one({"email": email})
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Check if already verified
+        if user.get("isEmailVerified", False):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is already verified"
+            )
+        
+        # Send verification code
+        code = await send_verification_code(email)
+        if not code:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send verification email"
+            )
+        
+        return {"message": "Verification code sent successfully"}
+        
+    except Exception as e:
+        logger.error(f"Send verification code error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

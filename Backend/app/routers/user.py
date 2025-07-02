@@ -196,8 +196,10 @@ async def resend_verification_email(
     email: str = Body(...),
     current_user: dict = Depends(get_current_user)
 ):
-    """Resend email verification link"""
+    """Resend email verification code"""
     try:
+        from app.lib.email import send_verification_code
+        
         db = get_database()
         user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
         
@@ -217,8 +219,14 @@ async def resend_verification_email(
                 detail="Email does not match current user"
             )
         
-        # TODO: Implement email sending logic here
-        # For now, just return success
+        # Send verification code
+        code = await send_verification_code(email)
+        if not code:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to send verification email"
+            )
+        
         origin = request.headers.get("origin", "http://localhost:3000")
         return JSONResponse(
             content={"message": "Verification email sent successfully"},
