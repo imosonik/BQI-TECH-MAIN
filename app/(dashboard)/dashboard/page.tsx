@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Briefcase, Clock, CheckCircle, XCircle, Calendar, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { DashboardOverview } from "@/components/user/DashboardOverview";
+import DashboardOverview from "@/components/user/DashboardOverview";
 import Loader from "@/components/Loader";
 import {
   Dialog,
