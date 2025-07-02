@@ -21,7 +21,7 @@ class Settings(BaseModel):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "BQI Tech Backend"
     app_url: str = "http://localhost:8000"
-    frontend_url: str = "http://localhost:3000"
+    frontend_url: str = os.getenv("NEXT_PUBLIC_APP_URL", "https://bqitech.com")
     
     # Security
     SECRET_KEY: str = Field(default=os.getenv("SECRET_KEY", "your-secret-key-change-in-production"))
