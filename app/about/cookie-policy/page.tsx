@@ -6,8 +6,8 @@ import Link from "next/link";
 
 export default function CookiePolicyPage() {
   return (
-    <div className="-mt-8">
-      <div className="bg-gradient-to-r from-[#272055] to-[#1B174E] py-16">
+    <div className="-mt-32">
+      <div className="bg-gradient-to-r from-[#0A2540] via-[#1E4D8A] to-[#0066CC] text-white py-32 mb-4 relative overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-2 text-sm text-gray-300 mb-4">
             <Link href="/" className="hover:text-white transition-colors">

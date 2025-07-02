@@ -1,55 +1,88 @@
 "use client";
 
-import { ReactNode, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import UserDashboardSidebar from "@/components/user/UserDashboardSidebar";
-import { Menu } from "lucide-react";
+import { ReactNode, useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import UserDashboardSidebar, { MobileBottomTabs } from '@/components/user/UserDashboardSidebar';
+import { DashboardHeader } from '@/components/user/DashboardHeader';
+import { EmailVerificationGuard } from '@/components/auth/EmailVerificationGuard';
 import { useRouter, usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isAuthenticated, authLoading, user } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Get page title based on pathname
+  const getPageTitle = () => {
+    const path = pathname.split('/').pop();
+    switch (path) {
+      case 'overview':
+        return 'Dashboard Overview';
+      case 'applications':
+        return 'My Applications';
+      case 'jobs':
+        return 'Available Jobs';
+      case 'settings':
+        return 'Settings';
+      default:
+        return 'Dashboard';
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!session) {
-    router.push('/login');
+  if (!isAuthenticated) {
     return null;
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 md:flex-row">
-      {/* Mobile Header */}
-      <div className="md:hidden bg-white p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">BQI Tech HR</h1>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500">
-          <Menu size={24} />
-        </button>
-      </div>
-
-      {/* Sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <UserDashboardSidebar />
-      </div>
-
-      {/* Mobile Sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-          <div className="relative flex flex-col w-full max-w-xs bg-white h-full">
-            <UserDashboardSidebar onClose={() => setSidebarOpen(false)} />
-          </div>
+    <EmailVerificationGuard requireVerification={true}>
+      <div className="flex flex-col h-screen w-screen bg-gray-50 md:flex-row overflow-hidden">
+        {/* Desktop Sidebar */}
+        <UserDashboardSidebar 
+          onClose={() => {}} 
+          isCollapsed={isCollapsed}
+          onCollapse={setIsCollapsed}
+        />
+        
+        <div className={`
+          flex-1 flex flex-col h-full w-full overflow-hidden
+          transition-all duration-300
+          ${isCollapsed ? 'md:pl-[100px]' : 'md:pl-[300px]'}
+          pb-20 md:pb-0
+        `}>
+          {/* Dashboard Header */}
+          <DashboardHeader 
+            title={getPageTitle()}
+          />
+          
+          {/* Main Content */}
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
+            <div className="h-full w-full p-6 md:p-8">
+              {children}
+            </div>
+          </main>
         </div>
-      )}
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8">
-        {children}
-      </main>
-    </div>
+        {/* iOS-style Bottom Tabs for Mobile */}
+        <MobileBottomTabs />
+      </div>
+    </EmailVerificationGuard>
   );
 }

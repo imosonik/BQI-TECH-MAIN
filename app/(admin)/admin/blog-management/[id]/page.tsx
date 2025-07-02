@@ -5,27 +5,40 @@ import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { BlogPostForm } from "@/components/admin/BlogPostForm"
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Loader } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { BlogPost } from "@/types/blog"
+import { useEffect } from "react"
 
 export default function BlogPostEditor() {
-  const { id } = useParams()
+  const params = useParams()
   const router = useRouter()
+  const id = typeof params?.id === 'string' ? params.id : null
   const isNew = id === "new"
 
-  const { data: blogPost, isLoading } = useQuery({
+  const { data: blogPost, isLoading, error } = useQuery({
     queryKey: ['blog-post', id],
     queryFn: async () => {
-      if (isNew) return null
+      if (isNew || !id) return null
       const res = await fetch(`/api/admin/blog-posts/${id}`)
-      if (!res.ok) throw new Error('Failed to fetch post')
-      return res.json()
-    }
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.message || 'Failed to fetch post')
+      }
+      const data = await res.json()
+      return data as BlogPost
+    },
+    enabled: !isNew && !!id,
+    retry: 2,
+    staleTime: 1000 * 60 * 5
   })
 
   const handleSubmit = async (data: Partial<BlogPost>) => {
     try {
+      if (!isNew && !id) {
+        throw new Error('Blog post ID is required for updates')
+      }
+
       const url = isNew ? "/api/admin/blog-posts" : `/api/admin/blog-posts/${id}`
       const method = isNew ? "POST" : "PATCH"
 
@@ -35,18 +48,79 @@ export default function BlogPostEditor() {
         body: JSON.stringify(data),
       })
 
-      if (!response.ok) throw new Error("Failed to save blog post")
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Failed to save blog post")
+      }
 
       toast.success("Blog post saved successfully")
       router.push("/admin/blog-management")
       router.refresh()
     } catch (error) {
-      toast.error("Failed to save blog post")
+      console.error('Save error:', error)
+      toast.error(error instanceof Error ? error.message : "Failed to save blog post")
     }
   }
 
+  useEffect(() => {
+    if (id === "new") {
+      router.replace("/admin/blog-management/new")
+    } else {
+      router.replace(`/admin/blog-management/${id}/view`)
+    }
+  }, [id, router])
+
+  // Handle invalid ID parameter
+  if (!isNew && !id) {
+    return (
+      <AdminPageLayout title="Error">
+        <div className="text-center py-8">
+          <h2 className="text-2xl font-bold mb-4">Invalid blog post ID</h2>
+          <Button onClick={() => router.push('/admin/blog-management')}>
+            Back to Posts
+          </Button>
+        </div>
+      </AdminPageLayout>
+    )
+  }
+
+  if (!isNew && error) {
+    return (
+      <AdminPageLayout title="Error">
+        <div className="text-center py-8">
+          <h2 className="text-2xl font-bold mb-4">Failed to load blog post</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {error instanceof Error ? error.message : "An error occurred"}
+          </p>
+          <Button onClick={() => router.push('/admin/blog-management')}>
+            Back to Posts
+          </Button>
+        </div>
+      </AdminPageLayout>
+    )
+  }
+
   if (!isNew && isLoading) {
-    return <div>Loading...</div>
+    return (
+      <AdminPageLayout title="Loading...">
+        <div className="flex justify-center items-center py-8">
+          <Loader className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminPageLayout>
+    )
+  }
+
+  if (!isNew && !blogPost) {
+    return (
+      <AdminPageLayout title="Not Found">
+        <div className="text-center py-8">
+          <h2 className="text-2xl font-bold mb-4">Post not found</h2>
+          <Button onClick={() => router.push('/admin/blog-management')}>
+            Back to Posts
+          </Button>
+        </div>
+      </AdminPageLayout>
+    )
   }
 
   return (

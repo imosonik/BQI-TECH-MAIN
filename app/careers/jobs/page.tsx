@@ -9,7 +9,8 @@ import { Search, MapPin, Clock, ChevronDown, X, Briefcase, Calendar } from "luci
 import { JobPosting } from "@/types/jobPosting";
 import Loader from "@/components/Loader";
 import { SafeHtml } from "@/components/ui/safe-html";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "react-hot-toast";
  
 export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,8 +20,8 @@ export default function JobsPage() {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
-  const isSignedIn = !!session;
+  const { user, isAuthenticated } = useAuth();
+  const isSignedIn = isAuthenticated;
  
   const {
     data: jobs,
@@ -28,7 +29,29 @@ export default function JobsPage() {
     error,
   } = useQuery<JobPosting[]>({
     queryKey: ["jobs"],
-    queryFn: () => fetch("/api/job-postings").then((res) => res.json()),
+    queryFn: async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/jobs`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch jobs');
+        }
+
+        const data = await response.json();
+        return data.jobs || [];
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        toast.error('Failed to load job listings');
+        throw error;
+      }
+    },
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    retry: 2, // Retry failed requests up to 2 times
   });
  
   const uniqueLocations = Array.from(
@@ -263,7 +286,7 @@ export default function JobsPage() {
                         className="text-blue-600 hover:bg-blue-50 group-hover:underline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleApply(job._id);
+                          handleApply(job.id);
                         }}
                       >
                         Quick Apply →
@@ -330,7 +353,7 @@ export default function JobsPage() {
                   <div className="sticky bottom-0 bg-white border-t border-gray-100/80">
                     <div className="p-6 sm:p-8 bg-gradient-to-t from-white/90 to-white/50 backdrop-blur-sm">
                       <Button
-                        onClick={() => handleApply(selectedJob._id)}
+                        onClick={() => handleApply(selectedJob.id)}
                         className="w-full py-6 bg-gradient-to-r from-[#33CCFF] to-[#272055] hover:from-[#272055] hover:to-[#33CCFF] text-white rounded-xl font-medium text-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
                       >
                         Apply Now

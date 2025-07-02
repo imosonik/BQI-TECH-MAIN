@@ -1,161 +1,118 @@
 "use client"
 
-import { signIn } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { motion } from "framer-motion"
-import { Mail, Lock, Github, Chrome, ArrowRight, UserPlus, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { getSession } from "next-auth/react"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { motion } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters")
-});
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
 
-export function LoginForm({ 
-  providers,
-  onError 
-}: { 
-  providers: any,
-  onError?: (error: string) => void 
-}) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+type FormData = z.infer<typeof formSchema>
+
+interface LoginFormProps {
+  onLogin: (email: string, password: string) => Promise<void>
+  onError: (error: string) => void
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onError }) => {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+  })
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    setIsLoading(true)
+  const onSubmit = async (data: FormData) => {
     try {
-      const result = await signIn("credentials", {
-        ...data,
-        redirect: false
-      })
-
-      if (result?.error) {
-        const errorMessage = result.error.includes("does not exist") || 
-                            result.error.includes("Incorrect password")
-                          ? "Invalid email or password"
-                          : result.error;
-        
-        onError?.(errorMessage);
-      }
-
-      const session = await getSession()
-      
-      if (result?.ok) {
-        if (!session?.user?.emailVerified) {
-          router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`)
-        } else {
-          window.location.href = "/dashboard"
-        }
-      }
+      setIsLoading(true)
+      await onLogin(data.email, data.password)
     } catch (error) {
-      onError?.(error.message || "Login failed")
+      onError(error.message)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="w-full space-y-8"
-    >
-      <div className="text-center space-y-2">
-        <motion.h1
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold"
-        >
-          Welcome Back
-        </motion.h1>
-        <p className="text-muted-foreground">
-          Sign in to your account
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">Welcome Back</h1>
+        <p className="text-gray-500 dark:text-gray-400">
+          Enter your credentials to access your account
         </p>
       </div>
-
-      <motion.form
-        onSubmit={form.handleSubmit(onSubmit)}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="space-y-6"
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              {...form.register("email", { required: true })}
-              className="h-12 focus:ring-2 focus:ring-[#31CDFF]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-[#31CDFF] hover:text-[#31CDFF]/90"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...form.register("password", { required: true })}
-              className="h-12 focus:ring-2 focus:ring-[#31CDFF]"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-12 text-base bg-gradient-to-r from-[#31CDFF] to-blue-500 hover:from-[#31CDFF]/90 hover:to-blue-500/90"
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            placeholder="Enter your email"
+            type="email"
             disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing In...
-              </>
-            ) : (
-              <>
-                Sign In
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </>
-            )}
-          </Button>
+            {...register("email")}
+            className="h-12"
+          />
+          {errors.email?.message && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            placeholder="Enter your password"
+            type="password"
+            disabled={isLoading}
+            {...register("password")}
+            className="h-12"
+          />
+          {errors.password?.message && (
+            <p className="text-sm text-red-500">{errors.password.message}</p>
+          )}
         </div>
 
-        <div className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
+        <div className="flex items-center justify-between">
           <Link
-            href="/sign-up"
-            className="font-medium text-[#31CDFF] hover:underline"
+            href="/forgot-password"
+            className="text-sm text-blue-600 hover:underline"
           >
-            Sign up
+            Forgot password?
           </Link>
         </div>
-      </motion.form>
-    </motion.div>
+
+        <Button
+          type="submit"
+          className="w-full h-12"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign in"
+          )}
+        </Button>
+      </form>
+
+      <div className="text-center text-sm">
+        Don&apos;t have an account?{" "}
+        <Link href="/sign-up" className="text-blue-600 hover:underline">
+          Sign up
+        </Link>
+      </div>
+    </div>
   )
-} 
+}
+
+export { LoginForm } 

@@ -1,353 +1,333 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import { ApplicationsTable } from "./ApplicationsTable";
-import useSWR from "swr";
 import { EditApplicationModal } from "@/components/admin/EditApplicationModal";
 import { ViewApplicationModal } from "@/components/admin/ViewApplicationModal";
 import { DeleteApplicationModal } from "@/components/admin/DeleteApplicationModal";
 import { Application } from "@/types/application";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
-import { Download, Upload, FileText, Sheet } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Download, Upload, FileText, Sheet, Search, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
+import { TableSkeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { authService } from "@/lib/auth-backend";
+import { toast } from "sonner";
+import { adminApi } from "@/lib/api-backend";
+import { useAuthErrorHandler } from "@/hooks/useAuthErrorHandler";
 
-interface Column {
-  header: string;
-  accessor: string | ((row: Application) => string);
-}
-
-const getDynamicColumns = (applications: Application[]) => {
-  return []; // No dynamic columns needed now
-};
-
-const staticColumns = [
-  {
-    header: "Applicant",
-    accessor: (row: Application) => row.name || [
-      ...(row.answers || []).filter(a => a.questionText.toLowerCase().includes('name')),
-    ].map(a => a.answer).join(' ')
-  },
-  {
-    header: "Email",
-    accessor: (row: Application) => row.email || 
-      (row.answers || []).find(a => a.questionText.toLowerCase().includes('email'))?.answer
-  },
-  {
-    header: "Phone",
-    accessor: (row: Application) => row.phoneNumber ||
-      (row.answers || []).find(a => a.questionText.toLowerCase().includes('phone'))?.answer
-  },
-  { header: "Position", accessor: "position" },
-  { header: "Status", accessor: "status" },
-  { 
-    header: "Applied Date", 
-    accessor: (row: Application) => new Date(row.appliedDate).toLocaleDateString() 
-  },
-  { 
-    header: "CV", 
-    accessor: (row: Application) => row.cvUrl
-  },
-  {
-    header: "Answers",
-    accessor: (row: Application) => row.answers?.map(a => 
-      `${a.questionText}: ${a.answer}`
-    ).join('\n') || '-',
-    cell: ({ value }: { value: string }) => (
-      <pre className="whitespace-pre-wrap">{value}</pre>
-    )
-  }
-];
-
-const oldStructureColumns = [
-  { header: "COTS Experience", accessor: "cotsExperience" },
-  { header: "SQL/JS Experience", accessor: "sqlJavaScriptExperience" },
-  { header: "Report Development", accessor: "reportDevelopmentExperience" }
-];
-
-const newStructureColumns = [
-  {
-    header: "Answers",
-    accessor: (row: Application) => row.answers?.map(a => 
-      `${a.questionText}: ${a.answer}`
-    ).join('\n') || '-'
-  }
-];
-
-// Add custom error type definition
-interface ApiError extends Error {
-  info?: any;
-  status?: number;
-}
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const error = new Error('Failed to fetch applications') as ApiError;
-    error.info = await res.json();
-    error.status = res.status;
-    throw error;
-  }
-  return res.json();
+// Add sort options type
+type SortOption = {
+  field: string;
+  label: string;
+  order: 'asc' | 'desc';
 };
 
 export default function ApplicationsPage() {
+  const router = useRouter();
+  const { isAuthenticated, isAdmin, authLoading } = useAuth();
+  const { handleError: handleAuthError } = useAuthErrorHandler();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPosition, setSelectedPosition] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedStructure, setSelectedStructure] = useState<'all' | 'old' | 'new'>('all');
-  const [structureType, setStructureType] = useState<'new' | 'old'>('new');
-  const { data: applications = [], error, isLoading, mutate } = useSWR<Application[]>(
-    `/api/admin/${structureType === 'new' ? 'applications' : 'old-applications'}`,
-    fetcher
-  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [jobTitles, setJobTitles] = useState<Record<string, string>>({});
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const [viewApplication, setViewApplication] = useState<Application | null>(null);
   const [editApplication, setEditApplication] = useState<Application | null>(null);
   const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
-  const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
-  const [jobTitles, setJobTitles] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const fetchJobTitles = async () => {
-      try {
-        const response = await fetch('/api/admin/jobs');
-        const jobs = await response.json();
-        const titles = jobs.reduce((acc: Record<string, string>, job: any) => {
-          acc[job.id] = job.title;
-          return acc;
-        }, {});
-        setJobTitles(titles);
-      } catch (error) {
-        console.error('Failed to fetch job titles:', error);
-      }
-    };
-    
-    fetchJobTitles();
-  }, []);
-
-  const allColumns = [
-    ...staticColumns,
-    ...getDynamicColumns(applications || [])
+  // Sort options
+  const sortOptions: SortOption[] = [
+    { field: 'createdAt', label: 'Latest Applications', order: 'desc' },
+    { field: 'createdAt', label: 'Oldest Applications', order: 'asc' },
+    { field: 'status', label: 'Status (A-Z)', order: 'asc' },
+    { field: 'status', label: 'Status (Z-A)', order: 'desc' },
+    { field: 'updatedAt', label: 'Last Updated (Newest)', order: 'desc' },
+    { field: 'updatedAt', label: 'Last Updated (Oldest)', order: 'asc' },
+    { field: 'appliedDate', label: 'Applied Date (Newest)', order: 'desc' },
+    { field: 'appliedDate', label: 'Applied Date (Oldest)', order: 'asc' }
   ];
 
-  if (error) return <div>Failed to load applications</div>;
-  if (isLoading) return <div>Loading...</div>;
+  // Handle sort selection
+  const handleSortChange = (option: SortOption) => {
+    setSortBy(option.field);
+    setSortOrder(option.order);
+    setCurrentPage(1); // Reset to first page when sorting changes
+  };
 
-  const filteredApplications = applications
-    .filter(app => {
-      const matchesSearch = [app.name, app.email, app.position].some(field => 
-        field?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      const matchesPosition = !selectedPosition || app.position === selectedPosition;
-      const matchesStatus = !selectedStatus || app.status === selectedStatus;
-      
-      return matchesSearch && matchesPosition && matchesStatus;
-    })
-    .sort((a, b) => 
-      new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
-    );
+  // Check authentication
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || !isAdmin)) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, isAdmin, router]);
 
-  function handleView(id: string) {
-    const application = applications.find((app) => app.id === id);
-    setViewApplication(application || null);
-  }
-
-  function handleEdit(id: string) {
-    const application = applications.find((app) => app.id === id);
-    setEditApplication(application || null);
-  }
-
-  function handleDelete(id: string) {
-    setDeleteApplicationId(id);
-  }
-
-  async function handleSaveEdit(updatedApplication: Application) {
+  // Fetch applications
+  const fetchApplications = async () => {
     try {
-      await fetch(`/api/admin/applications/${updatedApplication.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedApplication),
+      setIsLoading(true);
+      setError(null);
+
+      console.log('Fetching applications with params:', {
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+        status: selectedStatus || undefined,
+        search: searchTerm || undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder
       });
-      mutate();
-      setEditApplication(null);
+
+      const response = await adminApi.getApplications({
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+        status: selectedStatus || undefined,
+        search: searchTerm || undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder
+      });
+
+      console.log('Applications response:', response);
+
+      if (!response || typeof response !== 'object') {
+        console.error('Invalid response format:', response);
+        setError('Invalid response format from server');
+        return;
+      }
+
+      const applications = Array.isArray(response.applications) ? response.applications : [];
+      const total = typeof response.total === 'number' ? response.total : 0;
+
+      // Map the new structure to match existing application interface
+      const mappedApplications = applications.map(app => ({
+        ...app,
+        id: app.id,
+        name: app.userDetails?.name || app.answers?.find(a => 
+          a.questionText?.toLowerCase().includes('first name'))?.answer + ' ' + 
+          app.answers?.find(a => a.questionText?.toLowerCase().includes('last name'))?.answer || 'N/A',
+        email: app.userDetails?.email || app.answers?.find(a => 
+          a.questionText?.toLowerCase().includes('email'))?.answer || 'N/A',
+        phoneNumber: app.answers?.find(a => 
+          a.questionText?.toLowerCase().includes('phone'))?.answer || 'N/A',
+        position: app.position || app.jobDetails?.title || 'N/A',
+        status: app.status || 'New',
+        appliedDate: new Date(app.appliedDate),
+        cvUrl: app.cvUrl,
+        jobId: app.jobId,
+        jobDetails: app.jobDetails
+      }));
+
+      setApplications(mappedApplications);
+      setTotalPages(Math.ceil(total / itemsPerPage) || 1);
+
+      // No need to fetch job titles separately as they're included in jobDetails now
+      const jobTitlesMap: Record<string, string> = {};
+      applications.forEach(app => {
+        if (app.jobDetails?.id && app.jobDetails?.title) {
+          jobTitlesMap[app.jobDetails.id] = app.jobDetails.title;
+        }
+      });
+      setJobTitles(jobTitlesMap);
+
     } catch (error) {
-      console.error("Failed to update application:", error);
+      console.error('Failed to fetch applications:', error);
+      
+      // Handle authentication errors through the global handler
+      const isAuthError = handleAuthError(error);
+      
+      if (!isAuthError) {
+        setError('Failed to fetch applications');
+        toast.error('Failed to fetch applications');
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && isAdmin) {
+      fetchApplications();
+    }
+  }, [isAuthenticated, isAdmin, currentPage, selectedStatus, searchTerm, sortBy, sortOrder]);
+
+  // Handlers
+  const handleView = (id: string) => {
+    const application = applications.find(app => app.id === id);
+    setViewApplication(application || null);
+  };
+
+  const handleEdit = (id: string) => {
+    const application = applications.find(app => app.id === id);
+    setEditApplication(application || null);
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteApplicationId(id);
+  };
+
+  const handleSaveEdit = async (updatedApplication: Application) => {
+    try {
+      await adminApi.updateApplication(updatedApplication.id, updatedApplication);
+      await fetchApplications();
+      setEditApplication(null);
+      toast.success('Application updated successfully');
+    } catch (error) {
+      console.error('Failed to update application:', error);
+      const isAuthError = handleAuthError(error);
+      if (!isAuthError) {
+        toast.error('Failed to update application');
+      }
+    }
+  };
+
+  const handleConfirmDelete = async (id: string) => {
+    try {
+      await adminApi.deleteApplication(id);
+      await fetchApplications();
+      setDeleteApplicationId(null);
+      toast.success('Application deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete application:', error);
+      const isAuthError = handleAuthError(error);
+      if (!isAuthError) {
+        toast.error('Failed to delete application');
+      }
+    }
+  };
+
+  const handleBulkStatusChange = async (ids: string[], newStatus: string) => {
+    try {
+      await adminApi.updateBulkApplicationStatus(ids, newStatus);
+      await fetchApplications();
+      toast.success('Applications updated successfully');
+    } catch (error) {
+      console.error('Failed to update applications:', error);
+      const isAuthError = handleAuthError(error);
+      if (!isAuthError) {
+        toast.error('Failed to update applications');
+      }
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      await adminApi.deleteBulkApplications(ids);
+      await fetchApplications();
+      toast.success('Applications deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete applications:', error);
+      const isAuthError = handleAuthError(error);
+      if (!isAuthError) {
+        toast.error('Failed to delete applications');
+      }
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <AdminPageLayout title="Applications">
+        <TableSkeleton />
+      </AdminPageLayout>
+    );
   }
 
-  async function handleConfirmDelete(id: string) {
-    try {
-      await fetch(`/api/admin/applications/${id}`, { method: "DELETE" });
-      mutate();
-      setDeleteApplicationId(null);
-    } catch (error) {
-      console.error("Failed to delete application:", error);
-    }
+  if (error) {
+    return (
+      <AdminPageLayout title="Applications">
+        <div className="p-4 text-red-500">
+          Error: {error}
+          <Button onClick={fetchApplications} className="ml-2">
+            Retry
+          </Button>
+        </div>
+      </AdminPageLayout>
+    );
   }
 
   return (
-    <>
-      <AdminPageHeader title="Applications">
-        <div className="flex gap-2">
-          <Button
-            variant={structureType === 'new' ? 'default' : 'outline'}
-            onClick={() => setStructureType('new')}
-          >
-            New Structure
-          </Button>
-          <Button
-            variant={structureType === 'old' ? 'default' : 'outline'}
-            onClick={() => setStructureType('old')}
-          >
-            Old Structure
-          </Button>
-          <input
-            type="file"
-            id="importFile"
-            accept=".json"
-            className="hidden"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                  const data = JSON.parse(event.target?.result as string);
-                  await fetch('/api/admin/applications/import', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                  });
-                  // Refresh data
-                  mutate();
-                };
-                reader.readAsText(file);
-              }
-            }}
-          />
-          <Button
-            variant="outline"
-            onClick={() => document.getElementById('importFile')?.click()}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Import
-          </Button>
-          
+    <AdminPageLayout 
+      title="Applications" 
+      searchPlaceholder="Search applications..."
+      searchValue={searchTerm}
+      onSearch={setSearchTerm}
+      headerActions={
+        <div className="flex items-center space-x-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
+              <Button variant="secondary" className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                Sort
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Sort Applications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {sortOptions.map((option, index) => (
+                <DropdownMenuItem
+                  key={index}
+                  onClick={() => handleSortChange(option)}
+                  className="cursor-pointer"
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
                 Export
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem asChild>
-                <a 
-                  href="/api/admin/applications/export?format=json"
-                  className="cursor-pointer"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  JSON
-                </a>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a
-                  href="/api/admin/applications/export?format=csv"
-                  className="cursor-pointer"
-                >
-                  <Sheet className="mr-2 h-4 w-4" />
-                  CSV
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a
-                  href="/api/admin/applications/export?format=xlsx"
-                  className="cursor-pointer"
-                >
-                  <Sheet className="mr-2 h-4 w-4" />
-                  Excel
-                </a>
+              <DropdownMenuItem>
+                <Sheet className="h-4 w-4 mr-2" />
+                Export as Excel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </AdminPageHeader>
-      
-      {/* Sticky Search and Filter Section */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b">
-        <div className="p-4 max-w-[2000px] mx-auto">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Search by name, email or position..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <svg
-                className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            
-            <div className="flex flex-row gap-3 md:w-auto">
-              <select
-                className="w-full md:w-48 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                value={selectedPosition}
-                onChange={(e) => setSelectedPosition(e.target.value)}
-              >
-                <option value="">All Positions</option>
-                {Array.isArray(applications) && 
-                  [...new Set(applications.map(app => app.position))].map(position => (
-                    <option key={position} value={position}>{position}</option>
-                  ))
-                }
-              </select>
-              
-              <select
-                className="w-full md:w-48 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                <option value="Applied">Applied</option>
-                <option value="In Review">In Review</option>
-                <option value="Interview">Interview</option>
-                <option value="Hired">Hired</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-
-       
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div className="p-6">
+      }
+    >
+      <div className="flex flex-col">
         <div className="overflow-x-auto">
           <ApplicationsTable
-            applications={filteredApplications}
+            applications={applications}
             jobTitles={jobTitles}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            structureType={structureType}
+            onBulkStatusChange={handleBulkStatusChange}
+            onBulkDelete={handleBulkDelete}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         </div>
 
@@ -370,6 +350,6 @@ export default function ApplicationsPage() {
           onConfirm={handleConfirmDelete}
         />
       </div>
-    </>
+    </AdminPageLayout>
   );
 }
