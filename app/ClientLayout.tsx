@@ -7,7 +7,7 @@ import { Toaster } from 'react-hot-toast'
 import { SettingsProvider } from "@/contexts/SettingsContext"
 import { JsonLd } from '@/components/JsonLd'
 import ClientLayout from "@/components/ClientLayout"
-import { CookieConsentBanner } from '@/components/CookieConsentBanner'
+import CookieConsentBanner from '@/components/CookieConsentBanner'
 import Script from 'next/script'
 import Image from 'next/image'
 

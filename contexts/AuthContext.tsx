@@ -316,7 +316,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       avatar: avatarUrl,
       name: authState.user.firstName && authState.user.lastName 
         ? `${authState.user.firstName} ${authState.user.lastName}` 
-        : authState.user.email,
+        : authState.user.name || authState.user.email,
       isEmailVerified: authState.user.isEmailVerified || false
     }
 
@@ -329,9 +329,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Update session storage
     const currentSession = authService.getSession()
     if (currentSession) {
+      // Create auth-backend compatible user object
+      const sessionUser = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name || updatedUser.email, // Ensure name is always present
+        role: updatedUser.role,
+        isEmailVerified: updatedUser.isEmailVerified || false,
+        avatarUrl: updatedUser.avatar
+      }
+      
       authService.setSession({
         ...currentSession,
-        user: updatedUser
+        user: sessionUser
       })
     }
   }
@@ -403,9 +413,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Update session storage
       const currentSession = authService.getSession()
       if (currentSession) {
+        // Create auth-backend compatible user object
+        const sessionUser = {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name || updatedUser.email,
+          role: updatedUser.role,
+          isEmailVerified: isVerified,
+          avatarUrl: updatedUser.avatar
+        }
+        
         authService.setSession({
           ...currentSession,
-          user: updatedUser
+          user: sessionUser
         })
       }
       
