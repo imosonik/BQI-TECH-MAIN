@@ -138,115 +138,75 @@ export default function CallToAction() {
       {/* <FloatingShapes /> */}
 
       <div className="container relative mx-auto px-4">
-        <motion.div
-          className="relative rounded-[3rem] overflow-hidden bg-gradient-to-br from-[#0A1128] to-[#1B3C73] 
-                     mx-auto max-w-5xl backdrop-blur-xl shadow-2xl shadow-blue-900/30 border border-white/10
-                     group perspective-1000 transform-gpu transition-all duration-500 hover:scale-[1.02]
-                     hover:[transform:rotateX(2deg)_rotateY(-1deg)]"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {/* Enhanced 3D lighting effect */}
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 
-                         opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          {/* Animated glow effect */}
-          <div className="absolute -inset-px bg-gradient-to-r from-[#31CDFF]/20 via-purple-500/20 to-blue-500/20 
-                         opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500" />
+        <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          {/* First Card */}
+          <motion.div
+            className="rounded-3xl bg-gradient-to-br from-[#0A1128] to-[#1B3C73] 
+                       p-8 md:p-12 space-y-6 border border-white/10 
+                       shadow-2xl shadow-blue-900/30 
+                       hover:scale-[1.02] transition-transform duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center gap-3 bg-white/10 rounded-full py-2 px-4 w-fit">
+              <Sparkles className="w-5 h-5 text-[#31CDFF]" />
+              <span className="bg-gradient-to-r from-[#31CDFF] to-blue-400 text-transparent bg-clip-text 
+                             font-semibold uppercase tracking-wider text-sm">
+                Trusted by Government Agencies
+              </span>
+            </div>
 
-          {/* Content Container */}
-          <div className="relative px-8 py-24 sm:px-12 md:px-20 z-10">
-            <motion.div className="text-center max-w-3xl mx-auto space-y-10" variants={containerVariants}>
-              <motion.div 
-                className="flex items-center justify-center gap-3 bg-white/10 rounded-full py-2 px-4 w-fit mx-auto"
-                variants={itemVariants}
+            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight">
+              Across the United States, Kenya and Beyond
+            </h2>
+
+            <p className="text-gray-300 text-lg leading-relaxed">
+              We understand the complex needs of government digital transformation. Our experience working with both local and national agencies gives us the edge to deliver technology that works in real world public sector environments.
+            </p>
+          </motion.div>
+
+          {/* Second Card */}
+          <motion.div
+            className="rounded-3xl bg-gradient-to-br from-[#0A1128] to-[#1B3C73] 
+                       p-8 md:p-12 space-y-6 border border-white/10 
+                       shadow-2xl shadow-blue-900/30 
+                       hover:scale-[1.02] transition-transform duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-center gap-3 bg-white/10 rounded-full py-2 px-4 w-fit">
+              <Sparkles className="w-5 h-5 text-[#31CDFF]" />
+              <span className="bg-gradient-to-r from-[#31CDFF] to-blue-400 text-transparent bg-clip-text 
+                             font-semibold uppercase tracking-wider text-sm">
+                Get Started with BQI Tech
+              </span>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight">
+              Ready to Transform Your Agency
+            </h2>
+
+            <p className="text-gray-300 text-lg leading-relaxed">
+              Ready to take your agency to the next level? Talk to our team today about building secure, scalable, and tailored digital solutions for your department.
+            </p>
+
+            <div className="pt-4">
+              <Link
+                href="/services"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full 
+                           bg-[#31CDFF] text-white font-semibold text-lg 
+                           hover:bg-blue-500 transition-colors duration-300 
+                           group"
               >
-                <Sparkles className="w-5 h-5 text-[#31CDFF]" />
-                <span className="bg-gradient-to-r from-[#31CDFF] to-blue-400 text-transparent bg-clip-text 
-                               font-semibold uppercase tracking-wider text-sm">
-                  Empowering Government Digital Transformation
-                </span>
-              </motion.div>
-
-              <motion.h2 
-                className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight"
-                variants={itemVariants}
-              >
-                <span className="text-white">
-                  Modernize your agency with{" "}
-                </span>
-                <span className="relative">
-                  <span className="bg-gradient-to-r from-[#31CDFF] via-blue-400 to-[#31CDFF] text-transparent bg-clip-text">
-                    cutting-edge solutions
-                  </span>
-                  <motion.svg
-                    className="absolute -bottom-2 left-0 w-full"
-                    viewBox="0 0 300 12"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 2, ease: "easeOut" }}
-                  >
-                    <path
-                      d="M3 9C3 9 40 3 150 3C260 3 297 9 297 9"
-                      stroke="url(#gradient)"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <defs>
-                      <linearGradient id="gradient" x1="0" y1="0" x2="300" y2="0">
-                        <stop offset="0%" stopColor="#31CDFF" />
-                        <stop offset="50%" stopColor="#4F46E5" />
-                        <stop offset="100%" stopColor="#31CDFF" />
-                      </linearGradient>
-                    </defs>
-                  </motion.svg>
-                </span>
-                <span className="text-white">
-                  {" "}built for tomorrow.
-                </span>
-              </motion.h2>
-
-              <motion.p
-                variants={itemVariants}
-                className="text-gray-300 text-xl max-w-2xl mx-auto leading-relaxed"
-              >
-                From custom software development to enterprise system integration, we deliver 
-                secure, scalable, and high-performance solutions tailored for government agencies.
-              </motion.p>
-
-              <motion.div
-                variants={itemVariants}
-                className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
-              >
-                <Link
-                  href="/careers/jobs"
-                  className="group relative w-full sm:w-auto px-10 py-5 rounded-2xl font-semibold 
-                           overflow-hidden transition-all duration-300 transform hover:scale-105
-                           hover:[transform:translateZ(20px)] active:scale-95"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#31CDFF] via-blue-500 to-[#31CDFF] 
-                                transition-transform duration-300" />
-                  
-                  <div className="relative flex items-center justify-center gap-3 text-white text-lg">
-                    <span>View Current Vacancies</span>
-                    <ArrowRight className="w-5 h-5 transform group-hover:translate-x-2 transition-transform" />
-                  </div>
-                  
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-30 
-                                bg-gradient-to-r from-transparent via-white to-transparent 
-                                translate-x-[-100%] group-hover:translate-x-[100%] 
-                                transition-all duration-700 ease-in-out" />
-                </Link>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Enhanced mesh gradient background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(49,205,255,0.1),rgba(49,205,255,0)_50%)]" />
-        </motion.div>
+                Explore Our Services
+                <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
       </div>
 
       {/* Add noise texture */}

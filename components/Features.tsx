@@ -15,32 +15,32 @@ import * as THREE from 'three';
 const features = [
   {
     icon: Shield,
-    title: "Security-First Approach",
-    description: "Our solutions are built with security at their core, ensuring compliance and protecting sensitive data.",
+    title: "Security First Development",
+    description: "Security is at the core of every solution we build. Our team ensures that your systems meet governmentgrade compliance standards and protect sensitive data at every level",
     gradient: "from-[#31CDFF] to-blue-600",
     shadowColor: "rgba(49, 205, 255, 0.2)",
     delay: 0.2
   },
   {
     icon: Zap,
-    title: "Optimized for Performance",
-    description: "Our high-speed, scalable software ensures efficiency, helping you work smarter and faster.",
+    title: "High Performance & Scalable Software",
+    description: "Our custom built platforms are designed for speed, reliability, and long term growth. Whether you're managing a department or an entire government system, we ensure your tech infrastructure keeps up with demand.",
     gradient: "from-blue-600 to-[#272055]",
     shadowColor: "rgba(37, 99, 235, 0.2)",
     delay: 0.3
   },
   {
     icon: Code,
-    title: "Custom Development",
-    description: "We build bespoke software solutions to match your unique business or government agency needs.",
+    title: "Tailored Software for Public Sector Needs",
+    description: "We don’t believe in one size fits all. BQI Tech creates custom software tailored to your agency’s goals, workflows, and challenges helping you serve citizens better",
     gradient: "from-[#272055] to-[#31CDFF]",
     shadowColor: "rgba(39, 32, 85, 0.2)",
     delay: 0.4
   },
   {
     icon: Users,
-    title: "Client-Focused Solutions",
-    description: "We work closely with you to align technology solutions with your goals, ensuring seamless implementation.",
+    title: "Collaboration Focused Project Delivery",
+    description: "Our process is collaborative from day one. We work closely with your internal teams to ensure alignment, transparency, and smooth implementation across all phases",
     gradient: "from-[#31CDFF] to-blue-600",
     shadowColor: "rgba(49, 205, 255, 0.2)",
     delay: 0.5
@@ -346,20 +346,16 @@ export default function Features() {
           >
             <span className="inline-block w-2 h-2 rounded-full bg-[#31CDFF] animate-pulse" />
             <span className="text-[#31CDFF] font-semibold tracking-wider text-sm">
-              WHY CHOOSE US
+              Why Choose BQI Tech?
             </span>
           </motion.div>
 
-          <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold font-display leading-tight">
-            <span className="text-gray-900">Transforming Ideas into </span>
-            <span className="bg-gradient-to-r from-[#31CDFF] to-blue-600 text-transparent bg-clip-text">
-              Reality
-            </span>
-          </h2>
-          
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
-            Accelerate your digital transformation with cutting-edge solutions 
-            <span className="text-[#31CDFF] font-normal"> designed for maximum impact</span>.
+          <p className="text-2xl md:text-3xl text-gray-800 max-w-4xl mx-auto font-light leading-relaxed tracking-tight">
+            <span className="text-[#31CDFF] font-semibold">At BQI Tech,</span> we specialize in building 
+            <span className="font-bold text-gray-900"> high-performance software solutions</span> designed 
+            specifically for government agencies. From custom applications to full-scale enterprise IT systems, 
+            our goal is to enable <span className="bg-gradient-to-r from-[#31CDFF] to-blue-600 text-transparent bg-clip-text font-semibold">
+            efficient, secure, and future-ready public services</span>.
           </p>
         </motion.div>
 
@@ -387,11 +383,53 @@ export default function Features() {
           viewport={{ once: true }}
           className="mt-24 text-center"
         >
-          <span className="inline-flex items-center gap-2 text-[#31CDFF] font-medium">
-            <span className="h-px w-8 bg-[#31CDFF]/30" />
-            Discover more about our solutions
-            <span className="h-px w-8 bg-[#31CDFF]/30" />
-          </span>
+   
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center space-y-6 mb-24"
+        >
+          <motion.div 
+            className="inline-flex items-center gap-2 bg-[#31CDFF]/5 backdrop-blur-sm px-6 py-2 rounded-full mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <span className="inline-block w-2 h-2 rounded-full bg-[#31CDFF] animate-pulse" />
+       
+          </motion.div>
+
+          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl border border-white/10 shadow-xl p-8 md:p-12">
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+              Our Services Include:
+            </h3>
+            <ul className="grid md:grid-cols-2 gap-4 text-left">
+              {[
+                "Custom Software Development for Government",
+                "Enterprise Systems Integration",
+                "Cloud Based Infrastructure",
+                "Data Security & Compliance Solutions",
+                "Digital Process Automation"
+              ].map((service, index) => (
+                <motion.li
+                  key={service}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: index * 0.1 
+                  }}
+                  className="flex items-center gap-3 text-lg text-gray-700"
+                >
+                  <span className="text-[#31CDFF] font-bold">•</span>
+                  {service}
+                </motion.li>
+              ))}
+            </ul>
+          </div>
         </motion.div>
       </div>
     </motion.section>

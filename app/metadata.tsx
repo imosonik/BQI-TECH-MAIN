@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://bqitech.com'),
-  title: 'Custom Software Development & IT Solutions | BQITech',
-  description: 'BQITech offers custom software development, DevOps consultancy, and IT solutions for governments. Partner with top offshore software development experts today!',
+  title: "Secure Government Software & Digital Transformation | BQI Tech",
+  description: "BQI Tech delivers secure, scalable software solutions for government agencies, accelerating digital transformation with custom built technologies.",
+  metadataBase: new URL("https://www.bqitech.com"),
+  alternates: {
+    canonical: "/",
+  },
   keywords: ['custom software development', 'IT solutions', 'DevOps consultancy', 'government software', 'offshore development'],
   authors: [{ name: 'BQI Tech' }],
   creator: 'BQI Tech',
@@ -24,18 +27,20 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://bqitech.com',
     siteName: 'BQITech',
-    title: 'Custom Software Development & IT Solutions | BQITech',
-    description: 'BQITech offers custom software development, DevOps consultancy, and IT solutions for governments. Partner with top offshore software development experts today!',
+    title: 'Secure Government Software & Digital Transformation | BQI Tech',
+    description: 'BQI Tech delivers secure, scalable software solutions for government agencies, accelerating digital transformation with custom built technologies.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'BQITech - Custom Software Development & IT Solutions',
+        alt: 'BQI Tech - Secure Government Software & Digital Transformation',
         type: 'image/jpeg',
       },
     ],
   },
-  other: {}
+  other: {
+    'canonical': '<link rel="canonical" href="https://www.bqitech.com/" />'
+  }
 };
 

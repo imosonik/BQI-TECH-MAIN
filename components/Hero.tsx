@@ -39,10 +39,8 @@ const heroContent: HeroContent = {
     }
   ],
   typeSequence: [
-    "IT Solutions", 3000,
-    "Gov't Technology", 3000,
-    "Digital Innovation", 3000,
-    "Secure Systems", 3000
+    "& Digital Solutions", 3000,
+ 
   ]
 };
 
@@ -184,7 +182,7 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="block"
             >
-              <AnimatedText text="Building The Future of" />{" "}
+              <AnimatedText text="Innovative Government Software " />{" "}
             </motion.div>
             <span className="bg-gradient-to-r from-[#31CDFF] via-blue-400 to-purple-500 text-transparent bg-clip-text">
               <TypeAnimation
@@ -205,25 +203,16 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
           >
-            Empowering government agencies with{" "}
+            Empowering Public Sector Transformation with{" "}
             <motion.span
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.8 }}
               className="text-white font-normal"
             >
-              secure, scalable,
-            </motion.span>{" "}
-            and{" "}
-            <motion.span
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 1 }}
-              className="text-white font-normal"
-            >
-              innovative solutions
-            </motion.span>{" "}
-            to drive digital transformation
+              secure, Scalable Software.
+            </motion.span>
+        
           </motion.p>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
