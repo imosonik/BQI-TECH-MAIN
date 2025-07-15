@@ -153,10 +153,10 @@ export function Hero() {
         viewport={{ once: true, amount: 0.2 }}
       >
         <motion.div
-          className="text-center max-w-6xl mx-auto"
+          className="text-center max-w-6xl mx-auto w-full"
         >
           <motion.div
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-2 rounded-full mb-6"
+            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 rounded-full mb-4 sm:mb-6 mx-auto max-w-max"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ 
@@ -166,12 +166,12 @@ export function Hero() {
             }}
           >
             <span className="inline-block w-2 h-2 rounded-full bg-[#31CDFF] animate-pulse" />
-            <span className="text-[#31CDFF] font-semibold tracking-wider text-sm sm:text-base">
+            <span className="text-[#31CDFF] font-semibold tracking-wider text-xs sm:text-sm">
               TRANSFORMING GOVERNMENT TECHNOLOGY
             </span>
           </motion.div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 break-words">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white mb-4 break-words leading-tight">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -180,7 +180,7 @@ export function Hero() {
             >
               <AnimatedText text="Innovative Government Software " />{" "}
             </motion.div>
-            <span className="bg-gradient-to-r from-[#31CDFF] via-blue-400 to-purple-500 text-transparent bg-clip-text text-3xl sm:text-5xl md:text-6xl">
+            <span className="bg-gradient-to-r from-[#31CDFF] via-blue-400 to-purple-500 text-transparent bg-clip-text text-2xl sm:text-5xl md:text-6xl">
               <TypeAnimation
                 sequence={heroContent.typeSequence}
                 wrapper="span"
@@ -194,7 +194,7 @@ export function Hero() {
           </h1>
 
           <motion.p
-            className="text-xl sm:text-2xl md:text-3xl text-gray-300 mb-8 sm:mb-10 max-w-4xl mx-auto font-light"
+            className="text-base sm:text-xl md:text-2xl text-gray-300 mb-6 sm:mb-8 max-w-4xl mx-auto font-light px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
@@ -208,29 +208,28 @@ export function Hero() {
             >
               secure, Scalable Software.
             </motion.span>
-        
           </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
             <Link
               href="/about"
               className="group w-full sm:w-auto bg-gradient-to-r from-[#31CDFF] to-blue-600 text-white 
-                       px-8 sm:px-10 py-4 sm:py-5 rounded-full font-semibold text-lg
+                       px-6 sm:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg
                        hover:shadow-[0_0_30px_rgba(49,205,255,0.3)] transition-all duration-300 
                        flex items-center justify-center gap-3"
             >
               Get Started Today
-              <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/services"
               className="group w-full sm:w-auto border-2 border-white/20 bg-white/5 backdrop-blur-sm
                        hover:border-[#31CDFF]/40 hover:bg-[#31CDFF]/5
-                       text-white px-8 sm:px-10 py-4 sm:py-5 rounded-full font-semibold text-lg
+                       text-white px-6 sm:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg
                        transition-all duration-300 flex items-center justify-center gap-3"
             >
               Explore Services
-              <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </motion.div>
