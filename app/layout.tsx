@@ -8,6 +8,13 @@ import { usePathname } from 'next/navigation'
 import { Toaster } from "react-hot-toast"
 import { Toaster as SonnerToaster } from 'sonner'
 import { Providers } from './providers'
+import Script, { ScriptProps } from 'next/script'
+
+// Extend ScriptProps to include custom attributes
+interface CustomScriptProps extends ScriptProps {
+  'chatbot_id'?: string;
+  'data-type'?: string;
+}
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,7 +35,17 @@ export default function RootLayout({
           as="script"
         />
         <meta name="color-scheme" content="light dark" />
-        <script src="https://static.elfsight.com/platform/platform.js" async></script>
+        <Script
+          id="thinkstack-chatbot"
+          strategy="lazyOnload"
+          src="https://app.thinkstack.ai/bot/thinkstackai-loader.min.js"
+          data-type="default"
+          chatbot_id="67334193bde936bef06b2d4a"
+          {...{
+            'data-type': 'default',
+            'chatbot_id': '67334193bde936bef06b2d4a'
+          } as CustomScriptProps}
+        />
       </head>
       <body suppressHydrationWarning>
         <Providers>
@@ -36,7 +53,6 @@ export default function RootLayout({
             {children}
           </ClientWrapper>
           <Toaster />
-          <div className="elfsight-app-6e3c1a3b-7e56-4a9e-9699-3851b823ca87" data-elfsight-app-lazy></div>
         </Providers>
       </body>
     </html>
