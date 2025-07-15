@@ -4,7 +4,7 @@ import { ChevronDown, UserCircle } from "lucide-react"
 import { useState } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -27,13 +27,19 @@ const menuItems: MenuItem[] = [
 
 function MenuItem({ item, onClose }: { item: MenuItem; onClose: () => void }) {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   if (item.href) {
+    const isActive = pathname === item.href;
     return (
       <Link 
         href={item.href}
         scroll={false}
-        className="flex items-center py-4 px-6 text-[#31CDFF] text-[16px] font-medium hover:text-[#0052CC] hover:bg-white/5 border-b border-white/10"
+        className={`flex items-center py-4 px-6 text-[16px] font-medium hover:text-[#0052CC] hover:bg-white/5 border-b border-white/10 ${
+          isActive 
+            ? 'text-[#0052CC] font-semibold' 
+            : 'text-[#31CDFF]'
+        }`}
         onClick={onClose}
       >
         {item.title}
@@ -68,7 +74,11 @@ function MenuItem({ item, onClose }: { item: MenuItem; onClose: () => void }) {
                 key={subItem.href}
                 href={subItem.href}
                 scroll={false}
-                className="block py-2 px-8 text-[14px] text-gray-600 hover:text-[#0052CC]"
+                className={`block py-2 px-8 text-[14px] ${
+                  pathname === subItem.href 
+                    ? 'text-[#0052CC] font-semibold' 
+                    : 'text-gray-600 hover:text-[#0052CC]'
+                }`}
                 onClick={onClose}
               >
                 {subItem.label}

@@ -7,12 +7,13 @@ import { Search, Phone, User, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MobileMenu } from "@/components/MobileMenu"
 import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -36,6 +37,19 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const getNavLinkClasses = (route: string) => {
+    const isActive = pathname === route;
+    return `flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
+      isScrolled 
+        ? (isActive 
+            ? 'text-[#0052CC] font-semibold' 
+            : 'text-gray-700 hover:text-[#0052CC]')
+        : (isActive 
+            ? 'text-[#0052CC] font-semibold' 
+            : 'text-[#31CDFF] hover:text-[#0052CC]')
+    }`;
+  }
 
   return (
     <>
@@ -62,11 +76,7 @@ export default function Header() {
               <Link 
                 href="/" 
                 scroll={false}
-                className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
-                  isScrolled 
-                    ? 'text-gray-700 hover:text-[#0052CC]' 
-                    : 'text-[#31CDFF] hover:text-[#0052CC]'
-                }`}
+                className={getNavLinkClasses("/")}
               >
                 Home
               </Link>
@@ -74,11 +84,7 @@ export default function Header() {
               <Link 
                 href="/careers" 
                 scroll={false}
-                className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
-                  isScrolled 
-                    ? 'text-gray-700 hover:text-[#0052CC]' 
-                    : 'text-[#31CDFF] hover:text-[#0052CC]'
-                }`}
+                className={getNavLinkClasses("/careers")}
               >
                 Careers
               </Link>
@@ -86,11 +92,7 @@ export default function Header() {
               <Link 
                 href="/services" 
                 scroll={false}
-                className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
-                  isScrolled 
-                    ? 'text-gray-700 hover:text-[#0052CC]' 
-                    : 'text-[#31CDFF] hover:text-[#0052CC]'
-                }`}
+                className={getNavLinkClasses("/services")}
               >
                 Services
               </Link>
@@ -98,22 +100,14 @@ export default function Header() {
               <Link 
                 href="/about" 
                 scroll={false}
-                className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
-                  isScrolled 
-                    ? 'text-gray-700 hover:text-[#0052CC]' 
-                    : 'text-[#31CDFF] hover:text-[#0052CC]'
-                }`}
+                className={getNavLinkClasses("/about")}
               >
                 About
               </Link>
               <Link 
                 href="/blog" 
                 scroll={false}
-                className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
-                  isScrolled 
-                    ? 'text-gray-700 hover:text-[#0052CC]' 
-                    : 'text-[#31CDFF] hover:text-[#0052CC]'
-                }`}
+                className={getNavLinkClasses("/blog")}
               >
                 Blog
               </Link>
