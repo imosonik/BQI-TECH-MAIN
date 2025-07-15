@@ -44,23 +44,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Checking email verification:', { 
         isVerified, 
         email: authState.user.email,
-        user: authState.user 
+        user: {
+          ...authState.user,
+          sensitiveDataRemoved: true
+        },
+        fullVerificationStatus: {
+          userIsEmailVerified: authState.user.isEmailVerified,
+          authStateIsAuthenticated: authState.isAuthenticated,
+          userExists: !!authState.user
+        }
       });
       
       if (!isVerified) {
-        console.log('User email not verified, redirecting to verification page');
+        console.warn('User email not verified, redirecting to verification page', {
+          currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+        });
         const verifyUrl = `/auth/verify-email?email=${encodeURIComponent(authState.user.email)}`;
         router.push(verifyUrl);
         return false;
       }
       return true;
     }
+    console.log('Email verification check failed - not authenticated or no user', {
+      isAuthenticated: authState.isAuthenticated,
+      userExists: !!authState.user
+    });
     return false;
   };
 
   // Check email verification status
   const isEmailVerified = () => {
-    return authState.user?.isEmailVerified || false;
+    const verified = authState.user?.isEmailVerified || false;
+    console.log('🔐 Email Verification Check:', {
+      email: authState.user?.email,
+      isVerified: verified,
+      userExists: !!authState.user,
+      isAuthenticated: authState.isAuthenticated
+    });
+    return verified;
   };
 
   // Auto-check email verification when user state changes
@@ -399,39 +420,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Method to update verification status after email verification
   const updateEmailVerificationStatus = (isVerified: boolean) => {
-    if (authState.user) {
-      const updatedUser = {
-        ...authState.user,
-        isEmailVerified: isVerified
-      }
-      
-      setAuthState(prev => ({
-        ...prev,
-        user: updatedUser
-      }))
-      
-      // Update session storage
-      const currentSession = authService.getSession()
-      if (currentSession) {
-        // Create auth-backend compatible user object
-        const sessionUser = {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          name: updatedUser.name || updatedUser.email,
-          role: updatedUser.role,
-          isEmailVerified: isVerified,
-          avatarUrl: updatedUser.avatar
-        }
-        
-        authService.setSession({
-          ...currentSession,
-          user: sessionUser
-        })
-      }
-      
-      console.log('Email verification status updated:', isVerified)
-    }
-  }
+    console.group('🔍 Updating Email Verification Status');
+    console.log('Current Auth State Before Update:', {
+      isAuthenticated: authState.isAuthenticated,
+      user: authState.user ? {
+        email: authState.user.email,
+        isEmailVerified: authState.user.isEmailVerified
+      } : null
+    });
+
+    setAuthState(prevState => {
+      const updatedState = {
+        ...prevState,
+        user: prevState.user ? {
+          ...prevState.user,
+          isEmailVerified: isVerified
+        } : null
+      };
+
+      console.log('Updated Auth State:', {
+        isAuthenticated: updatedState.isAuthenticated,
+        user: updatedState.user ? {
+          email: updatedState.user.email,
+          isEmailVerified: updatedState.user.isEmailVerified
+        } : null
+      });
+
+      console.groupEnd();
+      return updatedState;
+    });
+  };
 
   console.log('Auth State Debug:', authState)
 

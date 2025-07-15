@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Loader2, CheckCircle2, XCircle, Zap } from 'lucide-react'
@@ -51,90 +51,33 @@ export default function EmailVerificationPage() {
 
 function EmailVerificationContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const { updateEmailVerificationStatus, authLoading } = useAuth()
+
+  // Initialize all state hooks at the top level
   const [email, setEmail] = useState<string | null>(null)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
   const [initialEmailSent, setInitialEmailSent] = useState(false)
-  const router = useRouter()
-  const { updateEmailVerificationStatus, authLoading } = useAuth()
 
-  // Fetch email from search params or local storage when component mounts
-  useEffect(() => {
-    const emailFromParams = searchParams.get('email')
-    const emailFromStorage = localStorage.getItem('verification_email')
-    
-    if (emailFromParams) {
-      setEmail(emailFromParams)
-      localStorage.setItem('verification_email', emailFromParams)
-    } else if (emailFromStorage) {
-      setEmail(emailFromStorage)
-    }
-  }, [searchParams])
-
-  // Redirect if authentication is not in loading state and no email is found
-  useEffect(() => {
-    if (!authLoading && !email) {
-      router.push('/login')
-    }
-  }, [authLoading, email, router])
-
-  // If authentication is still loading, show a loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
-          <p className="mt-4 text-lg text-muted-foreground">Checking authentication status...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const { handleSubmit, formState: { errors }, control, setError: setFormError } = useForm<z.infer<typeof otpSchema>>({
+  // Initialize form outside of any conditional block
+  const { 
+    handleSubmit, 
+    formState: { errors }, 
+    control, 
+    setError: setFormError 
+  } = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
     defaultValues: {
       code: ''
     }
-  })
+  });
 
-  useEffect(() => {
-    if (otp.length === 6) {
-      handleSubmit(onSubmit)()
-    }
-  }, [otp, handleSubmit])
+  // Memoize onSubmit to prevent unnecessary re-renders
+  const onSubmit = useCallback(async (data: z.infer<typeof otpSchema>) => {
+    if (!email) return;
 
-  useEffect(() => {
-    const sendInitialVerification = async () => {
-      if (email && !initialEmailSent && status === 'idle') {
-        try {
-          setStatus('loading')
-          const response = await authService.authenticatedFetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/users/resend-verification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(email)
-          })
-
-          if (!response.ok) {
-            const data = await response.json()
-            throw new Error(data.detail || 'Failed to send verification')
-          }
-          
-          toast.success('Verification code sent! Check your email.')
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to send verification email')
-        } finally {
-          setStatus('idle')
-          setInitialEmailSent(true)
-        }
-      }
-    }
-
-    const debounceTimer = setTimeout(sendInitialVerification, 500)
-    return () => clearTimeout(debounceTimer)
-  }, [email, initialEmailSent, status])
-
-  const onSubmit = async (data: z.infer<typeof otpSchema>) => {
     setStatus('loading')
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/auth/verify-email`, {
@@ -177,6 +120,87 @@ function EmailVerificationContent() {
       toast.error(error.message || 'Verification failed')
       setOtp('')
     }
+  }, [email, router, updateEmailVerificationStatus])
+
+  // Fetch email from search params or local storage
+  useEffect(() => {
+    const emailFromParams = searchParams.get('email')
+    const emailFromStorage = localStorage.getItem('verification_email')
+    
+    if (emailFromParams) {
+      setEmail(emailFromParams)
+      localStorage.setItem('verification_email', emailFromParams)
+    } else if (emailFromStorage) {
+      setEmail(emailFromStorage)
+    }
+  }, [searchParams])
+
+  // Redirect if no email and not loading
+  useEffect(() => {
+    if (!authLoading && !email) {
+      router.push('/login')
+    }
+  }, [authLoading, email, router])
+
+  // Send initial verification email
+  useEffect(() => {
+    const sendInitialVerification = async () => {
+      if (email && !initialEmailSent && status === 'idle') {
+        try {
+          setStatus('loading')
+          const response = await authService.authenticatedFetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/users/resend-verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(email)
+          })
+
+          if (!response.ok) {
+            const data = await response.json()
+            throw new Error(data.detail || 'Failed to send verification')
+          }
+          
+          toast.success('Verification code sent! Check your email.')
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to send verification email')
+        } finally {
+          setStatus('idle')
+          setInitialEmailSent(true)
+        }
+      }
+    }
+
+    const debounceTimer = setTimeout(sendInitialVerification, 500)
+    return () => clearTimeout(debounceTimer)
+  }, [email, initialEmailSent, status])
+
+  // Auto-submit when OTP is complete (memoized to prevent unnecessary re-renders)
+  const handleOtpSubmit = useCallback(() => {
+    if (otp.length === 6) {
+      handleSubmit(onSubmit)()
+    }
+  }, [otp, handleSubmit, onSubmit])
+
+  useEffect(() => {
+    handleOtpSubmit()
+  }, [handleOtpSubmit])
+
+  // Prevent rendering if authentication is loading or no email
+  if (authLoading || !email) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
+          <p className="mt-4 text-lg text-muted-foreground">
+            {authLoading ? 'Checking authentication status...' : 'Redirecting...'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const handleInputChange = (value: string) => {
+    setOtp(value)
+    if (error) setError('')
   }
 
   const handleResendCode = async () => {
@@ -203,11 +227,6 @@ function EmailVerificationContent() {
     } finally {
       setStatus('idle')
     }
-  }
-
-  const handleInputChange = (value: string) => {
-    setOtp(value)
-    if (error) setError('')
   }
 
   return (

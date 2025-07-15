@@ -49,17 +49,34 @@ export function EmailVerificationGuard({
         return;
       }
 
+      // Prevent multiple redirects by checking current path and using a flag
+      const hasRedirectedKey = 'emailVerificationRedirected';
+      const hasRedirectedBefore = localStorage.getItem(hasRedirectedKey);
+
       // Check if email is verified
       const isVerified = isEmailVerified();
       console.log('EmailVerificationGuard - Verification check:', {
         pathname,
         isVerified,
         userEmail: user.email,
-        isEmailVerified: user.isEmailVerified
+        isEmailVerified: user.isEmailVerified,
+        hasRedirectedBefore: !!hasRedirectedBefore
       });
 
-      if (!isVerified) {
+      // Only redirect if not already on verification page and not redirected recently
+      if (!isVerified && 
+          !pathname.startsWith('/auth/verify-email') && 
+          !hasRedirectedBefore) {
         console.log('Email not verified, redirecting to verification page');
+        
+        // Set a flag to prevent multiple redirects
+        localStorage.setItem(hasRedirectedKey, 'true');
+        
+        // Clear the flag after a short delay
+        setTimeout(() => {
+          localStorage.removeItem(hasRedirectedKey);
+        }, 5000);
+
         const verifyUrl = `/auth/verify-email?email=${encodeURIComponent(user.email)}`;
         router.push(verifyUrl);
         return;
