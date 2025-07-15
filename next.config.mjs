@@ -11,32 +11,21 @@ const nextConfig = {
     },
     async headers() {
         return [{
-            source: '/:path*',
+            source: '/(.*)',
             headers: [{
                 key: 'Content-Security-Policy',
                 value: [
-                    "default-src 'self' https://app.thinkstack.ai",
-                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js",
-                    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js",
-                    "style-src 'self' 'unsafe-inline' https://app.thinkstack.ai",
-                    "img-src 'self' data: https: http: https://app.thinkstack.ai",
-                    "frame-src 'self' https://www.google.com/recaptcha/ https://app.thinkstack.ai",
-                    "connect-src 'self' https://www.google.com/recaptcha/ https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js"
+                    "default-src 'self'",
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://ssl.google-analytics.com https://app.thinkstack.ai",
+                    "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://ssl.google-analytics.com https://app.thinkstack.ai",
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.thinkstack.ai",
+                    "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.thinkstack.ai",
+                    "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://clerk-telemetry.com https://*.googletagmanager.com https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://hcaptcha.com https://sentry.hcaptcha.com https://organic-hound-41949.upstash.io https://bqitech-nonprod-1.onrender.com https://bqitech.com https://core.service.elfsight.com https://app.thinkstack.ai https://api.thinkstack.ai",
+                    "font-src 'self' https://fonts.gstatic.com",
+                    "img-src 'self' data: https://*",
+                    "frame-src 'self' https://app.thinkstack.ai",
                 ].join('; ')
-            },
-            {
-                key: 'X-Frame-Options',
-                value: 'DENY'
-            },
-            {
-                key: 'X-Content-Type-Options',
-                value: 'nosniff'
-            },
-            {
-                key: 'Referrer-Policy',
-                value: 'strict-origin-when-cross-origin'
-            }
-            ]
+            }]
         }]
     }
 };

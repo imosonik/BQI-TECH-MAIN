@@ -27,10 +27,26 @@ export default function RootLayout({
     script.setAttribute('chatbot_id', '67334193bde936bef06b2d4a');
     script.setAttribute('data-type', 'default');
     script.async = true;
+    
+    // Add error handling
+    script.onerror = () => {
+      console.error('Failed to load ThinkStack AI script');
+    };
+
     document.head.appendChild(script);
+
+    // Load the icon separately
+    const iconScript = document.createElement('script');
+    iconScript.src = 'https://api.thinkstack.ai/api/v1/chatbot/icon/67334193bde936bef06b2d4a?type=default';
+    iconScript.async = true;
+    iconScript.onerror = () => {
+      console.error('Failed to load ThinkStack AI icon');
+    };
+    document.head.appendChild(iconScript);
 
     return () => {
       document.head.removeChild(script);
+      document.head.removeChild(iconScript);
     };
   }, []);
 
