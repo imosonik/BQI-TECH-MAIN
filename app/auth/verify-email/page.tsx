@@ -33,6 +33,26 @@ const otpSchema = z.object({
 
 const initialState = 'idle'
 
+// Utility function to safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem(key)
+    }
+    return null
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(key, value)
+    }
+  },
+  removeItem: (key: string): void => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem(key)
+    }
+  }
+}
+
 // Wrapper component to add Suspense support
 export default function EmailVerificationPage() {
   return (
@@ -52,10 +72,53 @@ export default function EmailVerificationPage() {
 function EmailVerificationContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { updateEmailVerificationStatus, authLoading } = useAuth()
+  const { updateEmailVerificationStatus, authLoading, user, isAuthenticated } = useAuth()
 
-  // Initialize all state hooks at the top level
-  const [email, setEmail] = useState<string | null>(null)
+  // Enhanced logging for debugging
+  useEffect(() => {
+    console.group('🔍 Email Verification Page Debug')
+    console.log('Authentication State:', {
+      authLoading,
+      isAuthenticated,
+      user: user ? {
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+        id: user.id
+      } : null
+    })
+    console.log('Search Params:', Object.fromEntries(searchParams.entries()))
+    console.log('Local Storage Email:', localStorage.getItem('verification_email'))
+    console.groupEnd()
+  }, [authLoading, isAuthenticated, user, searchParams])
+
+  // Robust email retrieval with multiple fallback mechanisms
+  const getEmailFromSources = useCallback(() => {
+    // Priority 1: Search Params
+    const emailFromParams = searchParams.get('email')
+    
+    // Priority 2: User Object
+    const emailFromUser = user?.email
+
+    // Priority 3: Local Storage (safely accessed)
+    const emailFromStorage = safeLocalStorage.getItem('verification_email')
+
+    console.group('📧 Comprehensive Email Retrieval')
+    console.log('Email from Params:', emailFromParams)
+    console.log('Email from User:', emailFromUser)
+    console.log('Email from Storage:', emailFromStorage)
+    console.groupEnd()
+
+    return emailFromParams || emailFromUser || emailFromStorage
+  }, [searchParams, user])
+
+  // State for email and verification
+  const [email, setEmail] = useState<string | null>(() => {
+    // Use a safe initialization that works on both server and client
+    if (typeof window !== 'undefined') {
+      return getEmailFromSources()
+    }
+    return null
+  })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
@@ -76,7 +139,17 @@ function EmailVerificationContent() {
 
   // Memoize onSubmit to prevent unnecessary re-renders
   const onSubmit = useCallback(async (data: z.infer<typeof otpSchema>) => {
-    if (!email) return;
+    console.log('🚀 Submitting Verification:', { 
+      email, 
+      otpLength: data.code.length 
+    })
+
+    if (!email) {
+      console.error('❌ No email found for verification')
+      toast.error('No email found. Please start the verification process again.')
+      router.push('/login')
+      return;
+    }
 
     setStatus('loading')
     try {
@@ -90,24 +163,58 @@ function EmailVerificationContent() {
         })
       })
 
+      // Parse the response to handle different error scenarios
+      const responseData = await response.json()
+      console.log('🔐 Verification Response:', { 
+        status: response.status, 
+        ok: response.ok, 
+        data: responseData 
+      })
+
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Verification failed')
+        // Handle specific error scenarios
+        if (responseData.detail === "Email already registered") {
+          console.warn('⚠️ Email Already Registered')
+          toast.error('This email is already registered. Please login or use a different email.', {
+            duration: 5000,
+            position: 'top-center',
+            style: {
+              background: '#FF6B6B',
+              color: 'white',
+              fontWeight: 'bold',
+              padding: '16px',
+              borderRadius: '8px',
+            },
+            icon: '🚫'
+          })
+
+          // Redirect to login page after showing the notification
+          setTimeout(() => {
+            router.push('/login')
+          }, 3000)
+
+          setStatus('error')
+          return
+        }
+
+        // Generic error handling
+        throw new Error(responseData.detail || 'Verification failed')
       }
 
-      const result = await response.json()
+      const result = responseData
       setStatus('success')
       toast.success('Email verified successfully!')
       
       // Try to refresh user profile to update verification status
       try {
         await updateEmailVerificationStatus(true)
+        console.log('✅ Email Verification Status Updated Successfully')
       } catch (sessionError) {
-        console.error('Error updating session:', sessionError)
+        console.error('❌ Error updating session:', sessionError)
       }
       
       // Remove stored email after successful verification
-      localStorage.removeItem('verification_email')
+      safeLocalStorage.removeItem('verification_email')
       
       // Redirect to appropriate dashboard based on user role
       const redirectPath = result.user?.role === 'admin' ? '/admin' : '/dashboard'
@@ -116,31 +223,43 @@ function EmailVerificationContent() {
       }, 1500)
       
     } catch (error) {
+      console.error('❌ Verification Error:', error)
       setStatus('error')
-      toast.error(error.message || 'Verification failed')
+      toast.error(error.message || 'Verification failed', {
+        duration: 3000,
+        position: 'top-center'
+      })
       setOtp('')
     }
   }, [email, router, updateEmailVerificationStatus])
 
-  // Fetch email from search params or local storage
+  // Effect to handle email retrieval and redirect logic
   useEffect(() => {
-    const emailFromParams = searchParams.get('email')
-    const emailFromStorage = localStorage.getItem('verification_email')
-    
-    if (emailFromParams) {
-      setEmail(emailFromParams)
-      localStorage.setItem('verification_email', emailFromParams)
-    } else if (emailFromStorage) {
-      setEmail(emailFromStorage)
-    }
-  }, [searchParams])
+    console.group('🔄 Email Verification Redirect Check')
+    console.log('Current State:', { 
+      authLoading, 
+      email, 
+      isAuthenticated,
+      userEmailVerified: user?.isEmailVerified
+    })
 
-  // Redirect if no email and not loading
-  useEffect(() => {
-    if (!authLoading && !email) {
-      router.push('/login')
+    // Prevent redirect if email is present and user is authenticated
+    if (!email && isAuthenticated) {
+      console.warn('❌ No email found. Attempting to retrieve from sources.')
+      const retrievedEmail = getEmailFromSources()
+      
+      if (retrievedEmail) {
+        setEmail(retrievedEmail)
+        // Safely store in localStorage
+        safeLocalStorage.setItem('verification_email', retrievedEmail)
+      } else {
+        // Last resort: redirect to login or dashboard
+        router.replace('/login')
+      }
     }
-  }, [authLoading, email, router])
+
+    console.groupEnd()
+  }, [email, isAuthenticated, router, getEmailFromSources])
 
   // Send initial verification email
   useEffect(() => {
