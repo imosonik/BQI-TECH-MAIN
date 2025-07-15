@@ -16,11 +16,11 @@ const nextConfig = {
                 value: [
                     "default-src 'self'",
                     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
-                    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com",
+                    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com https://universe-static.elfsightcdn.com",
                     "style-src 'self' 'unsafe-inline'",
                     "img-src 'self' data: https: http:",
                     "frame-src 'self' https://www.google.com/recaptcha/ https://app.thinkstack.ai",
-                    "connect-src 'self' https://www.google.com/recaptcha/"
+                    "connect-src 'self' https://www.google.com/recaptcha/ https://core.service.elfsight.com"
                 ].join('; ')
             },
             {
