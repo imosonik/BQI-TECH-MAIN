@@ -49,21 +49,15 @@ const nextConfig = {
         const isProduction = process.env.NODE_ENV === 'production';
 
         const cspDirectives = [
-            `default-src 'self'`,
-            `script-src 'self' ${isProduction ? '' : "'unsafe-inline' 'unsafe-eval'"} https://js.hcaptcha.com`,
+            `default-src 'self' https://app.thinkstack.ai`,
+            `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js`,
             `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js`,
-            `style-src 'self' 'unsafe-inline'`,
-            `img-src 'self' data: blob: https://dl.dropboxusercontent.com https://images.unsplash.com`,
-            `connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://clerk-telemetry.com https://*.googletagmanager.com https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://hcaptcha.com https://sentry.hcaptcha.com ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr http://localhost:9000' : ''} https://organic-hound-41949.upstash.io https://bqitech-nonprod-1.onrender.com https://bqitech.com https://core.service.elfsight.com https://app.thinkstack.ai`,
-            `frame-src https://newassets.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://app.thinkstack.ai`,
-            `font-src 'self' data:`
+            `style-src 'self' 'unsafe-inline' https://app.thinkstack.ai`,
+            `img-src 'self' data: blob: https://dl.dropboxusercontent.com https://images.unsplash.com https://app.thinkstack.ai`,
+            `connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://clerk-telemetry.com https://*.googletagmanager.com https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://hcaptcha.com https://sentry.hcaptcha.com ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr http://localhost:9000' : ''} https://organic-hound-41949.upstash.io https://bqitech-nonprod-1.onrender.com https://bqitech.com https://core.service.elfsight.com https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js`,
+            `frame-src 'self' https://www.google.com/recaptcha/ https://app.thinkstack.ai`,
+            `font-src 'self' data: https://app.thinkstack.ai`
         ];
-
-        if (isProduction) {
-            cspDirectives.push(
-                `script-src-elem 'self' https://www.googletagmanager.com https://js.hcaptcha.com https://static.elfsight.com https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js`
-            );
-        }
 
         const securityHeaders = [{
             key: 'Content-Security-Policy',
@@ -76,30 +70,9 @@ const nextConfig = {
         ];
 
         return [{
-            source: '/sitemap.xml',
-            headers: [{
-                key: 'Content-Type',
-                value: 'application/xml',
-            },
-            {
-                key: 'Cache-Control',
-                value: 'public, max-age=3600, must-revalidate',
-            },
-            ],
-        },
-        {
             source: '/:path*',
-            headers: securityHeaders,
-        },
-        {
-            source: '/api/:path*',
-            headers: [
-                { key: 'Access-Control-Allow-Origin', value: '*' },
-                { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-                { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-            ],
-        },
-        ]
+            headers: securityHeaders
+        }];
     },
     webpack: (config, { isServer }) => {
         if (!isServer) {

@@ -2,19 +2,13 @@
 import { Inter } from "next/font/google"
 import ClientWrapper from './ClientWrapper'
 import "./globals.css"
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { metadata } from './metadata'
 import { usePathname } from 'next/navigation'
 import { Toaster } from "react-hot-toast"
 import { Toaster as SonnerToaster } from 'sonner'
 import { Providers } from './providers'
-import Script, { ScriptProps } from 'next/script'
-
-// Extend ScriptProps to include custom attributes
-interface CustomScriptProps extends ScriptProps {
-  'chatbot_id'?: string;
-  'data-type'?: string;
-}
+import Script from 'next/script'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,6 +20,20 @@ export default function RootLayout({
 }: {
   children: ReactNode
 }) {
+  useEffect(() => {
+    // Dynamically load ThinkStack AI script
+    const script = document.createElement('script');
+    script.src = 'https://app.thinkstack.ai/bot/thinkstackai-loader.min.js';
+    script.setAttribute('chatbot_id', '67334193bde936bef06b2d4a');
+    script.setAttribute('data-type', 'default');
+    script.async = true;
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
@@ -35,17 +43,6 @@ export default function RootLayout({
           as="script"
         />
         <meta name="color-scheme" content="light dark" />
-        <Script
-          id="thinkstack-chatbot"
-          strategy="lazyOnload"
-          src="https://app.thinkstack.ai/bot/thinkstackai-loader.min.js"
-          data-type="default"
-          chatbot_id="67334193bde936bef06b2d4a"
-          {...{
-            'data-type': 'default',
-            'chatbot_id': '67334193bde936bef06b2d4a'
-          } as CustomScriptProps}
-        />
       </head>
       <body suppressHydrationWarning>
         <Providers>
