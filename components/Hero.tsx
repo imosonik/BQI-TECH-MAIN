@@ -21,6 +21,18 @@ const heroContent: HeroContent = {
       src: "/Sliders/slider1.png",
       overlay: "bg-gradient-to-r from-[#0B0F19]/70 to-[#0B0F19]/50"
     },
+    {
+      src: "/Sliders/slider2.png",
+      overlay: "bg-gradient-to-r from-[#0B0F19]/70 to-[#0B0F19]/50"
+    },
+    {
+      src: "/Sliders/slider3.png",
+      overlay: "bg-gradient-to-r from-[#0B0F19]/70 to-[#0B0F19]/50"
+    },
+    {
+      src: "/Sliders/slider5.png",
+      overlay: "bg-gradient-to-r from-[#0B0F19]/70 to-[#0B0F19]/50"
+    },
    
   ],
   typeSequence: [
