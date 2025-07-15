@@ -75,6 +75,7 @@ export default function CookieConsentBanner() {
   })
   const [isVisible, setIsVisible] = useState(false)
 
+  // Update the useEffect to handle consent state more robustly
   useEffect(() => {
     const checkConsent = async () => {
       try {
@@ -102,8 +103,14 @@ export default function CookieConsentBanner() {
           setCookiePolicy(data.cookiePolicy);
         }
         
-        // Show banner only if user hasn't made a choice
-        setIsVisible(!data.hasConsent && data.hasConsent !== false);
+        // More explicit logic for showing/hiding banner
+        const hasExplicitConsent = data.hasConsent === true || data.hasConsent === false;
+        const shouldShowBanner = !hasExplicitConsent;
+        
+        // Check browser cookies as a fallback
+        const cookieConsent = document.cookie.includes('cookie_consent=');
+        
+        setIsVisible(shouldShowBanner && !cookieConsent);
       } catch (error) {
         console.error('Failed to check cookie consent:', error);
         // Show banner on error
@@ -120,6 +127,7 @@ export default function CookieConsentBanner() {
     setIsVisible(false);
   };
 
+  // Update handleAgreeAndProceed to set browser cookie
   const handleAgreeAndProceed = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:10000';
@@ -142,6 +150,9 @@ export default function CookieConsentBanner() {
         throw new Error('Failed to save cookie preferences');
       }
 
+      // Set browser cookie as a fallback
+      document.cookie = `cookie_consent=accepted; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+
       setConsent({
         hasConsent: true,
         preferences: defaultPreferences
@@ -149,7 +160,9 @@ export default function CookieConsentBanner() {
       setIsVisible(false);
     } catch (error) {
       console.error('Error saving cookie preferences:', error);
-      // Still hide banner and set consent in local state even if server save fails
+      // Set browser cookie as a fallback
+      document.cookie = `cookie_consent=accepted; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      
       setConsent({
         hasConsent: true,
         preferences: defaultPreferences
@@ -158,6 +171,7 @@ export default function CookieConsentBanner() {
     }
   };
 
+  // Similar updates to handleRejectAll and handleSavePreferences
   const handleRejectAll = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:10000';
@@ -178,6 +192,9 @@ export default function CookieConsentBanner() {
         throw new Error('Failed to save cookie preferences');
       }
 
+      // Set browser cookie as a fallback
+      document.cookie = `cookie_consent=rejected; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+
       setConsent({
         hasConsent: false,
         preferences: {
@@ -190,7 +207,18 @@ export default function CookieConsentBanner() {
       setIsVisible(false);
     } catch (error) {
       console.error('Failed to set cookie consent:', error);
-      // Still hide banner even on error
+      // Set browser cookie as a fallback
+      document.cookie = `cookie_consent=rejected; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      
+      setConsent({
+        hasConsent: false,
+        preferences: {
+          essential: true,
+          functional: false,
+          analytics: false,
+          application: false
+        }
+      });
       setIsVisible(false);
     }
   };
@@ -217,6 +245,13 @@ export default function CookieConsentBanner() {
         throw new Error('Failed to save cookie preferences');
       }
 
+      // Set browser cookies for each preference
+      document.cookie = `cookie_consent=custom; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_essential=true; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_functional=${preferences.functional}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_analytics=${preferences.analytics}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_application=${preferences.application}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+
       setConsent({
         hasConsent: true,
         preferences: preferences
@@ -224,7 +259,13 @@ export default function CookieConsentBanner() {
       setIsVisible(false);
     } catch (error) {
       console.error('Error saving cookie preferences:', error);
-      // Still hide banner and set consent in local state even if server save fails
+      // Set browser cookies as a fallback
+      document.cookie = `cookie_consent=custom; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_essential=true; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_functional=${preferences.functional}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_analytics=${preferences.analytics}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `cookie_pref_application=${preferences.application}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+      
       setConsent({
         hasConsent: true,
         preferences: preferences

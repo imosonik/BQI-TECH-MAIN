@@ -9,7 +9,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 
 interface HeroContent {
   images: {
-    url: string;
+    src: string;
     overlay: string;
   }[];
   typeSequence: (string | number)[];
@@ -18,29 +18,13 @@ interface HeroContent {
 const heroContent: HeroContent = {
   images: [
     {
-      url: "https://images.unsplash.com/photo-1611348524140-53c9a25263d6?auto=format&fit=crop&q=80&w=2000",
+      src: "/Sliders/slider1.png",
       overlay: "bg-gradient-to-r from-[#0B0F19]/70 to-[#0B0F19]/50"
     },
-    {
-      url: "https://images.unsplash.com/photo-1582653291997-079a1c04e5a1?auto=format&fit=crop&q=80&w=2000",
-      overlay: "bg-gradient-to-r from-[#0B0F19]/65 to-[#0B0F19]/50"
-    },
-    {
-      url: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&q=80&w=2000",
-      overlay: "bg-gradient-to-r from-[#0B0F19]/65 to-[#0B0F19]/55"
-    },
-    {
-      url: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000",
-      overlay: "bg-gradient-to-r from-[#0B0F19]/60 to-[#0B0F19]/50"
-    },
-    {
-      url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000",
-      overlay: "bg-gradient-to-r from-[#0B0F19]/60 to-[#0B0F19]/50"
-    }
+   
   ],
   typeSequence: [
-    "& Digital Solutions", 3000,
- 
+    "& Digital Solutions", 3000
   ]
 };
 
@@ -71,7 +55,7 @@ export function Hero() {
       const imagePromises = heroContent.images.map((image) => {
         return new Promise((resolve, reject) => {
           const img = new window.Image();
-          img.src = image.url;
+          img.src = image.src;
           img.onload = resolve;
           img.onerror = reject;
         });
@@ -122,7 +106,7 @@ export function Hero() {
           >
             <div className="absolute inset-0 w-full h-full overflow-hidden">
               <Image
-                src={image.url}
+                src={image.src}
                 alt={`Hero background image ${index + 1}`}
                 fill
                 sizes="100vw"
