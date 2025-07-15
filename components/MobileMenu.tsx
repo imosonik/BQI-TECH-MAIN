@@ -32,7 +32,8 @@ function MenuItem({ item, onClose }: { item: MenuItem; onClose: () => void }) {
     return (
       <Link 
         href={item.href}
-        className="flex items-center py-4 px-6 text-[#31CDFF] text-[16px] font-medium hover:bg-white/5 border-b border-white/10"
+        scroll={false}
+        className="flex items-center py-4 px-6 text-[#31CDFF] text-[16px] font-medium hover:text-[#0052CC] hover:bg-white/5 border-b border-white/10"
         onClick={onClose}
       >
         {item.title}
@@ -66,7 +67,8 @@ function MenuItem({ item, onClose }: { item: MenuItem; onClose: () => void }) {
               <Link
                 key={subItem.href}
                 href={subItem.href}
-                className="block py-2 px-8 text-[14px] text-gray-600 hover:text-gray-900"
+                scroll={false}
+                className="block py-2 px-8 text-[14px] text-gray-600 hover:text-[#0052CC]"
                 onClick={onClose}
               >
                 {subItem.label}

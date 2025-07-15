@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from 'react'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -32,15 +33,63 @@ const otpSchema = z.object({
 
 const initialState = 'idle'
 
+// Wrapper component to add Suspense support
 export default function EmailVerificationPage() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(initialState)
-  const [otp, setOtp] = useState('')
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
+          <p className="mt-4 text-lg text-muted-foreground">Loading verification page...</p>
+        </div>
+      </div>
+    }>
+      <EmailVerificationContent />
+    </Suspense>
+  )
+}
+
+function EmailVerificationContent() {
   const searchParams = useSearchParams()
-  const email = searchParams.get('email')
+  const [email, setEmail] = useState<string | null>(null)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
   const [initialEmailSent, setInitialEmailSent] = useState(false)
   const router = useRouter()
-  const { updateEmailVerificationStatus } = useAuth()
+  const { updateEmailVerificationStatus, authLoading } = useAuth()
+
+  // Fetch email from search params or local storage when component mounts
+  useEffect(() => {
+    const emailFromParams = searchParams.get('email')
+    const emailFromStorage = localStorage.getItem('verification_email')
+    
+    if (emailFromParams) {
+      setEmail(emailFromParams)
+      localStorage.setItem('verification_email', emailFromParams)
+    } else if (emailFromStorage) {
+      setEmail(emailFromStorage)
+    }
+  }, [searchParams])
+
+  // Redirect if authentication is not in loading state and no email is found
+  useEffect(() => {
+    if (!authLoading && !email) {
+      router.push('/login')
+    }
+  }, [authLoading, email, router])
+
+  // If authentication is still loading, show a loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
+          <p className="mt-4 text-lg text-muted-foreground">Checking authentication status...</p>
+        </div>
+      </div>
+    )
+  }
 
   const { handleSubmit, formState: { errors }, control, setError: setFormError } = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
@@ -113,6 +162,9 @@ export default function EmailVerificationPage() {
       } catch (sessionError) {
         console.error('Error updating session:', sessionError)
       }
+      
+      // Remove stored email after successful verification
+      localStorage.removeItem('verification_email')
       
       // Redirect to appropriate dashboard based on user role
       const redirectPath = result.user?.role === 'admin' ? '/admin' : '/dashboard'

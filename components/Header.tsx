@@ -61,10 +61,11 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-8">
               <Link 
                 href="/" 
+                scroll={false}
                 className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
                   isScrolled 
-                    ? 'text-gray-700 hover:text-[#31CDFF]' 
-                    : 'text-[#31CDFF] hover:text-white'
+                    ? 'text-gray-700 hover:text-[#0052CC]' 
+                    : 'text-[#31CDFF] hover:text-[#0052CC]'
                 }`}
               >
                 Home
@@ -72,10 +73,11 @@ export default function Header() {
 
               <Link 
                 href="/careers" 
+                scroll={false}
                 className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
                   isScrolled 
-                    ? 'text-gray-700 hover:text-[#31CDFF]' 
-                    : 'text-[#31CDFF] hover:text-white'
+                    ? 'text-gray-700 hover:text-[#0052CC]' 
+                    : 'text-[#31CDFF] hover:text-[#0052CC]'
                 }`}
               >
                 Careers
@@ -83,10 +85,11 @@ export default function Header() {
 
               <Link 
                 href="/services" 
+                scroll={false}
                 className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
                   isScrolled 
-                    ? 'text-gray-700 hover:text-[#31CDFF]' 
-                    : 'text-[#31CDFF] hover:text-white'
+                    ? 'text-gray-700 hover:text-[#0052CC]' 
+                    : 'text-[#31CDFF] hover:text-[#0052CC]'
                 }`}
               >
                 Services
@@ -94,20 +97,22 @@ export default function Header() {
 
               <Link 
                 href="/about" 
+                scroll={false}
                 className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
                   isScrolled 
-                    ? 'text-gray-700 hover:text-[#31CDFF]' 
-                    : 'text-[#31CDFF] hover:text-white'
+                    ? 'text-gray-700 hover:text-[#0052CC]' 
+                    : 'text-[#31CDFF] hover:text-[#0052CC]'
                 }`}
               >
                 About
               </Link>
               <Link 
                 href="/blog" 
+                scroll={false}
                 className={`flex items-center gap-1.5 text-[16px] font-medium rounded-md px-2 py-2 transition-colors ${
                   isScrolled 
-                    ? 'text-gray-700 hover:text-[#31CDFF]' 
-                    : 'text-[#31CDFF] hover:text-white'
+                    ? 'text-gray-700 hover:text-[#0052CC]' 
+                    : 'text-[#31CDFF] hover:text-[#0052CC]'
                 }`}
               >
                 Blog

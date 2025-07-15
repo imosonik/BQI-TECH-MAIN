@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { useState, useEffect, useRef } from "react";
-import Loader from "@/components/Loader";
+import { useEffect, useRef } from "react";
 import { useInView } from "framer-motion";
 
 const recruitmentSteps = [
@@ -135,37 +134,8 @@ const shimmerAnimation = {
 // };
 
 export default function CareersPage() {
-  const [isLoading, setIsLoading] = useState(true);
-
   const processRef = useRef(null);
   const isProcessInView = useInView(processRef, { once: true, margin: "-100px" });
-
-  useEffect(() => {
-    // Create an array of promises for all images
-    const imagesToLoad = [
-      "/careers-hero-bg.jpg",
-      "/culture10.jpg", 
-      "/software.png", 
-      "/benefits1.jpg", 
-      "/footerbg.gif"
-    ].map(src => {
-      return new Promise((resolve, reject) => {
-        const img = new window.Image();
-        img.src = src;
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-    });
-
-    // Wait for all images to load
-    Promise.all(imagesToLoad)
-      .then(() => setIsLoading(false))
-      .catch(() => setIsLoading(false)); // Still show content if images fail to load
-  }, []);
-
-  if (isLoading) {
-    return <Loader />;
-  }
 
   const breadcrumbItems = [{ label: "Careers" }];
 

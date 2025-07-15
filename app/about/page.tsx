@@ -84,8 +84,8 @@ const team = [
     role: "Configuration Analyst",
     image: "/Teams/Geo1.jpg",
     social: {
-      linkedin: "#",
-      github: "#"
+    
+      github: "https://github.com/Geotechcompany"
     }
   },
   {
@@ -111,8 +111,8 @@ const team = [
     role: "Software Engineer",
     image: "/Teams/Geoffrey Nyakundi.jpg",
     social: {
-      linkedin: "#",
-      github: "#"
+      linkedin: "https://www.linkedin.com/in/geoffreynyakundi/",
+      
     }
   },
   {
