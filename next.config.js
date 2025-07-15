@@ -51,17 +51,17 @@ const nextConfig = {
         const cspDirectives = [
             `default-src 'self'`,
             `script-src 'self' ${isProduction ? '' : "'unsafe-inline' 'unsafe-eval'"} https://js.hcaptcha.com`,
-            `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
+            `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com`,
             `style-src 'self' 'unsafe-inline'`,
             `img-src 'self' data: blob: https://dl.dropboxusercontent.com https://images.unsplash.com`,
             `connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://clerk-telemetry.com https://*.googletagmanager.com https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://hcaptcha.com https://sentry.hcaptcha.com ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr http://localhost:9000' : ''} https://organic-hound-41949.upstash.io https://bqitech-nonprod-1.onrender.com https://bqitech.com`,
-            `frame-src https://newassets.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/`,
+            `frame-src https://newassets.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://app.thinkstack.ai`,
             `font-src 'self' data:`
         ];
 
         if (isProduction) {
             cspDirectives.push(
-                `script-src-elem 'self' https://www.googletagmanager.com https://js.hcaptcha.com`
+                `script-src-elem 'self' https://www.googletagmanager.com https://js.hcaptcha.com https://static.elfsight.com`
             );
         }
 
