@@ -26,23 +26,23 @@ const nextConfig = {
         dangerouslyAllowSVG: true,
         contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
         remotePatterns: [{
-                protocol: 'https',
-                hostname: '**.dropboxusercontent.com',
-                port: '',
-                pathname: '/**',
-            },
-            {
-                protocol: 'https',
-                hostname: '**.unsplash.com',
-                port: '',
-                pathname: '/**',
-            },
-            {
-                protocol: 'https',
-                hostname: '**.bqitech.com',
-                port: '',
-                pathname: '/**',
-            }
+            protocol: 'https',
+            hostname: '**.dropboxusercontent.com',
+            port: '',
+            pathname: '/**',
+        },
+        {
+            protocol: 'https',
+            hostname: '**.unsplash.com',
+            port: '',
+            pathname: '/**',
+        },
+        {
+            protocol: 'https',
+            hostname: '**.bqitech.com',
+            port: '',
+            pathname: '/**',
+        }
         ]
     },
     async headers() {
@@ -51,54 +51,54 @@ const nextConfig = {
         const cspDirectives = [
             `default-src 'self'`,
             `script-src 'self' ${isProduction ? '' : "'unsafe-inline' 'unsafe-eval'"} https://js.hcaptcha.com`,
-            `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com https://universe-static.elfsightcdn.com`,
+            `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://static.elfsight.com https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js`,
             `style-src 'self' 'unsafe-inline'`,
             `img-src 'self' data: blob: https://dl.dropboxusercontent.com https://images.unsplash.com`,
-            `connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://clerk-telemetry.com https://*.googletagmanager.com https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://hcaptcha.com https://sentry.hcaptcha.com ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr http://localhost:9000' : ''} https://organic-hound-41949.upstash.io https://bqitech-nonprod-1.onrender.com https://bqitech.com https://core.service.elfsight.com`,
+            `connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://clerk-telemetry.com https://*.googletagmanager.com https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://hcaptcha.com https://sentry.hcaptcha.com ${process.env.NODE_ENV === 'development' ? 'ws://localhost:3000/_next/webpack-hmr http://localhost:9000' : ''} https://organic-hound-41949.upstash.io https://bqitech-nonprod-1.onrender.com https://bqitech.com https://core.service.elfsight.com https://app.thinkstack.ai`,
             `frame-src https://newassets.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://app.thinkstack.ai`,
             `font-src 'self' data:`
         ];
 
         if (isProduction) {
             cspDirectives.push(
-                `script-src-elem 'self' https://www.googletagmanager.com https://js.hcaptcha.com https://static.elfsight.com https://universe-static.elfsightcdn.com`
+                `script-src-elem 'self' https://www.googletagmanager.com https://js.hcaptcha.com https://static.elfsight.com https://app.thinkstack.ai https://app.thinkstack.ai/bot/thinkstackai-loader.min.js`
             );
         }
 
         const securityHeaders = [{
-                key: 'Content-Security-Policy',
-                value: cspDirectives.join('; ')
-            },
-            {
-                key: 'X-Content-Type-Options',
-                value: 'nosniff'
-            }
+            key: 'Content-Security-Policy',
+            value: cspDirectives.join('; ')
+        },
+        {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+        }
         ];
 
         return [{
-                source: '/sitemap.xml',
-                headers: [{
-                        key: 'Content-Type',
-                        value: 'application/xml',
-                    },
-                    {
-                        key: 'Cache-Control',
-                        value: 'public, max-age=3600, must-revalidate',
-                    },
-                ],
+            source: '/sitemap.xml',
+            headers: [{
+                key: 'Content-Type',
+                value: 'application/xml',
             },
             {
-                source: '/:path*',
-                headers: securityHeaders,
+                key: 'Cache-Control',
+                value: 'public, max-age=3600, must-revalidate',
             },
-            {
-                source: '/api/:path*',
-                headers: [
-                    { key: 'Access-Control-Allow-Origin', value: '*' },
-                    { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-                    { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-                ],
-            },
+            ],
+        },
+        {
+            source: '/:path*',
+            headers: securityHeaders,
+        },
+        {
+            source: '/api/:path*',
+            headers: [
+                { key: 'Access-Control-Allow-Origin', value: '*' },
+                { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+                { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+            ],
+        },
         ]
     },
     webpack: (config, { isServer }) => {
@@ -129,15 +129,15 @@ const nextConfig = {
     },
     async redirects() {
         return [{
-                source: '/admin',
-                destination: '/admin/overview',
-                permanent: true,
-            },
-            {
-                source: '/dashboard',
-                destination: '/dashboard/overview',
-                permanent: true,
-            }
+            source: '/admin',
+            destination: '/admin/overview',
+            permanent: true,
+        },
+        {
+            source: '/dashboard',
+            destination: '/dashboard/overview',
+            permanent: true,
+        }
         ];
     },
     transpilePackages: ['@uiw/react-md-editor', 'react-beautiful-dnd'],
@@ -145,7 +145,7 @@ const nextConfig = {
         return [{
             source: '/sitemap.xml',
             destination: '/api/sitemap',
-        }, ]
+        },]
     },
     output: 'standalone',
 };
