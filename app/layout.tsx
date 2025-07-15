@@ -28,6 +28,7 @@ export default function RootLayout({
           as="script"
         />
         <meta name="color-scheme" content="light dark" />
+        <script src="https://static.elfsight.com/platform/platform.js" async></script>
       </head>
       <body suppressHydrationWarning>
         <Providers>
@@ -35,6 +36,7 @@ export default function RootLayout({
             {children}
           </ClientWrapper>
           <Toaster />
+          <div className="elfsight-app-6e3c1a3b-7e56-4a9e-9699-3851b823ca87" data-elfsight-app-lazy></div>
         </Providers>
       </body>
     </html>
