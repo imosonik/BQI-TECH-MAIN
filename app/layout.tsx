@@ -24,6 +24,12 @@ export default function RootLayout({
     // Dynamically load ThinkStack AI script
     const loadThinkStackScript = () => {
       return new Promise<void>((resolve, reject) => {
+        // Check if script is already loaded
+        if (document.querySelector('script[src="https://app.thinkstack.ai/bot/thinkstackai-loader.min.js"]')) {
+          resolve();
+          return;
+        }
+
         const script = document.createElement('script');
         script.src = 'https://app.thinkstack.ai/bot/thinkstackai-loader.min.js';
         script.setAttribute('chatbot_id', '67334193bde936bef06b2d4a');
@@ -32,6 +38,20 @@ export default function RootLayout({
         
         script.onload = () => {
           console.log('ThinkStack AI script loaded successfully');
+          
+          // Attempt to initialize the chatbot
+          try {
+            // @ts-ignore
+            if (window.ThinkStackAI) {
+              // @ts-ignore
+              window.ThinkStackAI.init({
+                chatbotId: '67334193bde936bef06b2d4a'
+              });
+            }
+          } catch (initError) {
+            console.error('Failed to initialize ThinkStack AI', initError);
+          }
+          
           resolve();
         };
         
@@ -44,10 +64,9 @@ export default function RootLayout({
       });
     };
 
-    // Attempt to load the script
-    loadThinkStackScript().catch(() => {
-      // Fallback or error handling if needed
-      console.warn('Could not load ThinkStack AI chatbot');
+    // Attempt to load the script with error handling
+    loadThinkStackScript().catch((error) => {
+      console.warn('Could not load ThinkStack AI chatbot', error);
     });
 
     return () => {
