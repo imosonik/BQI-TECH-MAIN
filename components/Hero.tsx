@@ -171,7 +171,7 @@ export function Hero() {
             </span>
           </motion.div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 text-white leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 break-words">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -180,7 +180,7 @@ export function Hero() {
             >
               <AnimatedText text="Innovative Government Software " />{" "}
             </motion.div>
-            <span className="bg-gradient-to-r from-[#31CDFF] via-blue-400 to-purple-500 text-transparent bg-clip-text">
+            <span className="bg-gradient-to-r from-[#31CDFF] via-blue-400 to-purple-500 text-transparent bg-clip-text text-3xl sm:text-5xl md:text-6xl">
               <TypeAnimation
                 sequence={heroContent.typeSequence}
                 wrapper="span"
@@ -188,7 +188,7 @@ export function Hero() {
                 repeat={Infinity}
                 speed={35}
                 deletionSpeed={50}
-                style={{ display: 'inline-block' }}
+                style={{ display: 'inline-block', fontSize: 'inherit' }}
               />
             </span>
           </h1>
@@ -237,12 +237,12 @@ export function Hero() {
 
         {/* Enhanced Scroll Indicator */}
         <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2"
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2 text-center"
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <span className="text-white/60 text-sm font-medium tracking-wider">SCROLL DOWN</span>
-          <ChevronDown className="w-5 h-5 text-[#31CDFF]" />
+          <span className="text-white/60 text-xs sm:text-sm font-medium tracking-wider opacity-70">SCROLL DOWN</span>
+          <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#31CDFF] opacity-70" />
         </motion.div>
       </motion.div>
     </section>

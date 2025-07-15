@@ -22,31 +22,40 @@ export default function RootLayout({
 }) {
   useEffect(() => {
     // Dynamically load ThinkStack AI script
-    const script = document.createElement('script');
-    script.src = 'https://app.thinkstack.ai/bot/thinkstackai-loader.min.js';
-    script.setAttribute('chatbot_id', '67334193bde936bef06b2d4a');
-    script.setAttribute('data-type', 'default');
-    script.async = true;
-    
-    // Add error handling
-    script.onerror = () => {
-      console.error('Failed to load ThinkStack AI script');
+    const loadThinkStackScript = () => {
+      return new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://app.thinkstack.ai/bot/thinkstackai-loader.min.js';
+        script.setAttribute('chatbot_id', '67334193bde936bef06b2d4a');
+        script.setAttribute('data-type', 'default');
+        script.async = true;
+        
+        script.onload = () => {
+          console.log('ThinkStack AI script loaded successfully');
+          resolve();
+        };
+        
+        script.onerror = (error) => {
+          console.error('Failed to load ThinkStack AI script', error);
+          reject(error);
+        };
+
+        document.head.appendChild(script);
+      });
     };
 
-    document.head.appendChild(script);
-
-    // Load the icon separately
-    const iconScript = document.createElement('script');
-    iconScript.src = 'https://api.thinkstack.ai/api/v1/chatbot/icon/67334193bde936bef06b2d4a?type=default';
-    iconScript.async = true;
-    iconScript.onerror = () => {
-      console.error('Failed to load ThinkStack AI icon');
-    };
-    document.head.appendChild(iconScript);
+    // Attempt to load the script
+    loadThinkStackScript().catch(() => {
+      // Fallback or error handling if needed
+      console.warn('Could not load ThinkStack AI chatbot');
+    });
 
     return () => {
-      document.head.removeChild(script);
-      document.head.removeChild(iconScript);
+      // Cleanup if necessary
+      const existingScript = document.head.querySelector('script[src="https://app.thinkstack.ai/bot/thinkstackai-loader.min.js"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
     };
   }, []);
 
