@@ -467,7 +467,7 @@ export const publicApi = {
 
   // Contact
   submitContact: (data: any) =>
-    fetch(`${BACKEND_URL}/api/contact`, {
+    fetch(`${BACKEND_URL}/api/contact/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

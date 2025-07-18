@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, ChevronRight, Send } from 'lucide-react';
+import Image from 'next/image';
+import { Mail, Phone, MapPin, ChevronRight, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import Link from 'next/link';
 
 // Define an interface for the form data
 interface FormData {
@@ -15,27 +18,13 @@ interface FormData {
   message: string
 }
 
-function Breadcrumb() {
-  return (
-    <nav className="flex mb-4" aria-label="Breadcrumb">
-      <ol className="inline-flex items-center space-x-1 md:space-x-3">
-        <li className="inline-flex items-center">
-          <a href="/" className="text-sm font-medium text-gray-700 hover:text-teal-500">
-            Home
-          </a>
-        </li>
-        <li>
-          <div className="flex items-center">
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <a href="/contact-us" className="ml-1 text-sm font-medium text-gray-700 hover:text-teal-500">
-              Contact Us
-            </a>
-          </div>
-        </li>
-      </ol>
-    </nav>
-  )
-}
+const services = [
+  "Software Engineering Services",
+  "Professional and Implementation Services",
+  "Enterprise Platform Solutions",
+  "Strategic IT Consulting",
+  "DevOps and Cloud Engineering"
+]
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -55,76 +44,91 @@ export default function ContactUsPage() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'success' | 'error' | null
+    message: string
+  }>({ type: null, message: '' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear status when user starts typing
+    if (submitStatus.type) {
+      setSubmitStatus({ type: null, message: '' });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setSubmitStatus({ type: null, message: '' });
+    
     try {
-      const response = await fetch('/api/contact-us', {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:10000';
+      const response = await fetch(`${BACKEND_URL}/api/contact/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) throw new Error('Failed to send message');
+      const result = await response.json();
 
-      window.location.href = '/contact-us/confirmation';
-    } catch (error) {
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send message');
+      }
+
+      setSubmitStatus({
+        type: 'success',
+        message: 'Thank you! Your message has been sent successfully. We\'ll get back to you soon.'
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        role: '',
+        phone: '',
+        organization: '',
+        service: '',
+        email: '',
+        message: ''
+      });
+      
+      // Redirect to confirmation page after a brief delay
+      setTimeout(() => {
+        window.location.href = '/contact-us/confirmation';
+      }, 2000);
+      
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      setSubmitStatus({
+        type: 'error',
+        message: error.message || 'Failed to send message. Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <motion.main 
-        className="container mx-auto px-4 py-12 max-w-7xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Breadcrumb />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="container mx-auto px-4 pt-24 pb-12">
+        <Breadcrumb items={[{ label: "Contact Us" }]} />
         
         {/* Hero Section */}
-        <div className="relative py-16 md:py-24">
-          <motion.div 
-            className="absolute inset-0 bg-gradient-to-r from-teal-500/10 to-blue-500/10 rounded-3xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          />
-          <div className="relative text-center">
-            <motion.div 
-              className="mb-8"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.2]">
-                Let's Build Something
-                <span className="block mt-4 bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent leading-[1.2]">
-                  Amazing Together
-                </span>
-              </h1>
-            </motion.div>
-            <motion.p 
-              className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mt-6"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Have a project in mind? We'd love to discuss how we can help bring your ideas to life.
-            </motion.p>
-          </div>
-        </div>
+        <motion.div
+          className="text-center mb-12"
+          variants={fadeInUp}
+          initial="initial"
+          animate="animate"
+        >
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+            Get in Touch
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Ready to transform your organization with our expert IT consulting and software development services? 
+            Let's discuss your project and explore how we can help you achieve your goals.
+          </p>
+        </motion.div>
 
-        {/* Contact Grid */}
         <div className="grid lg:grid-cols-5 gap-12 mt-12">
           {/* Contact Form */}
           <motion.div
@@ -139,6 +143,26 @@ export default function ContactUsPage() {
             </div>
             
             <form className="p-8 space-y-6" onSubmit={handleSubmit}>
+              {/* Status Message */}
+              {submitStatus.type && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-4 rounded-xl flex items-center gap-3 ${
+                    submitStatus.type === 'success'
+                      ? 'bg-green-50 text-green-800 border border-green-200'
+                      : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}
+                >
+                  {submitStatus.type === 'success' ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                  )}
+                  <span className="font-medium">{submitStatus.message}</span>
+                </motion.div>
+              )}
+
               <div className="grid md:grid-cols-2 gap-6">
                 {['name', 'email'].map((field) => (
                   <div key={field} className="relative">
@@ -183,8 +207,9 @@ export default function ContactUsPage() {
                   value={formData.service}
                 >
                   <option value="">Select Service Type</option>
-                  <option value="Software Engineering Services">Software Engineering Services</option>
-                  <option value="Professional and Implementation Services">Professional and Implementation Services</option>
+                  {services.map((service) => (
+                    <option key={service} value={service}>{service}</option>
+                  ))}
                 </select>
               </div>
 
@@ -203,9 +228,9 @@ export default function ContactUsPage() {
 
               <motion.button
                 type="submit"
-                className="w-full bg-gradient-to-r from-teal-500 to-blue-500 text-white px-8 py-4 rounded-xl font-medium inline-flex items-center justify-center space-x-2 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transition-all duration-300"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                className="w-full bg-gradient-to-r from-teal-500 to-blue-500 text-white px-8 py-4 rounded-xl font-medium inline-flex items-center justify-center space-x-2 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: isLoading ? 1 : 1.01 }}
+                whileTap={{ scale: isLoading ? 1 : 0.99 }}
                 disabled={isLoading}
               >
                 <span>{isLoading ? 'Sending...' : 'Send Message'}</span>
@@ -278,7 +303,7 @@ export default function ContactUsPage() {
             </div>
           </motion.div>
         </div>
-      </motion.main>
+      </div>
     </div>
   );
 }

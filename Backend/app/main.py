@@ -115,7 +115,7 @@ app.add_middleware(
     allow_origins=[
         settings.frontend_url,
         "http://localhost:3000",
-        "http://localhost:9000",
+        "http://localhost:10000",
         "https://bqitech.com",
         "https://bqitech-nonprod.netlify.app",
         "https://www.bqitech-nonprod.netlify.app"
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=9000,  # Match NEXT_PUBLIC_PYTHON_API_URL
+        port=10000,  # Match NEXT_PUBLIC_PYTHON_API_URL
         reload=True,
         log_level="info",
         access_log=False,

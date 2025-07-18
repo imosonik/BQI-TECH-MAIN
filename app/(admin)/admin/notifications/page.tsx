@@ -130,7 +130,7 @@ export default function NotificationsPage() {
         throw new Error('No auth token available');
       }
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:9000'}/api/admin/notifications/seed`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:10000'}/api/admin/notifications/seed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
