@@ -17,7 +17,8 @@ const nextConfig = {
             'cdn.pixabay.com',
             'img.freepik.com',
             'source.unsplash.com',
-            'picsum.photos'
+            'picsum.photos',
+            'images.pexels.com'
         ],
         formats: ['image/webp', 'image/avif'],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

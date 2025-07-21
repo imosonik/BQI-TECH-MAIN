@@ -60,7 +60,7 @@ const services = [
       'Environment Management and Automation'
     ],
     footer: `Our DevOps services are designed to reduce deployment times, minimize downtime, and enhance system reliability in both on-premise and cloud environments.`,
-    image: 'https://images.unsplash.com/photo-1461344577544-4e5dc9487184?auto=format&fit=crop&w=1600&q=80' // Glowing cloud/digital infrastructure
+    image: 'https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&w=1600&q=80' // Data center with blue lighting, strong tech/devops vibe
   }
 ]
 
