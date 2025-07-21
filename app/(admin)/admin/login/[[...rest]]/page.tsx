@@ -288,7 +288,7 @@ export default function AdminLoginPage() {
       
     } catch (error) {
       console.error('Login error:', error);
-      toast.error("Invalid credentials", {
+      toast.error("Incorrect email or password. Please try again.", {
         description: error.message || "Please check your email and password",
       });
     } finally {

@@ -34,7 +34,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onError }) => {
       setIsLoading(true)
       await onLogin(data.email, data.password)
     } catch (error) {
-      onError(error.message)
+      const errorMsg = typeof error === 'string' ? error : (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') ? error.message : 'Incorrect email or password. Please try again.';
+      onError(errorMsg)
     } finally {
       setIsLoading(false)
     }

@@ -18,8 +18,8 @@ export default function LoginWrapper() {
     }
   }
 
-  const handleError = (error: string) => {
-    toast.error(error || "Login failed")
+  const handleError = () => {
+    toast.error("Incorrect email or password. Please try again.")
   }
 
   return (
