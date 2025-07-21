@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { motion } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Home } from 'lucide-react'
 import Link from 'next/link'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -110,6 +110,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onError }) => {
         Don&apos;t have an account?{" "}
         <Link href="/sign-up" className="text-blue-600 hover:underline">
           Sign up
+        </Link>
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300 rounded-lg shadow-sm hover:shadow-md text-gray-600 hover:text-gray-800 font-medium text-sm transition-all duration-200 group"
+        >
+          <Home className="h-4 w-4 text-gray-500 group-hover:text-gray-700 transition-colors" />
+          <span>Back to Home</span>
         </Link>
       </div>
     </div>
