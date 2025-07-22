@@ -41,46 +41,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkEmailVerification = () => {
     if (authState.isAuthenticated && authState.user) {
       const isVerified = authState.user.isEmailVerified || false;
-      console.log('Checking email verification:', { 
-        isVerified, 
-        email: authState.user.email,
-        user: {
-          ...authState.user,
-          sensitiveDataRemoved: true
-        },
-        fullVerificationStatus: {
-          userIsEmailVerified: authState.user.isEmailVerified,
-          authStateIsAuthenticated: authState.isAuthenticated,
-          userExists: !!authState.user
-        }
-      });
       
       if (!isVerified) {
-        console.warn('User email not verified, redirecting to verification page', {
-          currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-        });
         const verifyUrl = `/auth/verify-email?email=${encodeURIComponent(authState.user.email)}`;
         router.push(verifyUrl);
         return false;
       }
       return true;
     }
-    console.log('Email verification check failed - not authenticated or no user', {
-      isAuthenticated: authState.isAuthenticated,
-      userExists: !!authState.user
-    });
     return false;
   };
 
   // Check email verification status
   const isEmailVerified = () => {
     const verified = authState.user?.isEmailVerified || false;
-    console.log('🔐 Email Verification Check:', {
-      email: authState.user?.email,
-      isVerified: verified,
-      userExists: !!authState.user,
-      isAuthenticated: authState.isAuthenticated
-    });
     return verified;
   };
 
@@ -92,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const requiresVerification = currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin');
       
       if (requiresVerification && !authState.user.isEmailVerified) {
-        console.log('User not verified, redirecting from:', currentPath);
         checkEmailVerification();
       }
     }
@@ -100,7 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle authentication errors
   const handleAuthError = (error: any) => {
-    console.error('Authentication error detected:', error)
     
     // Check if it's an authentication/authorization error
     const isAuthError = 
@@ -115,11 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Only show session expired dialog if user was previously authenticated
     // Don't show it if user was never logged in or already logged out
     if (isAuthError && authState.isAuthenticated && authState.user) {
-      console.log('Authentication error detected for authenticated user, showing session expired dialog')
       setShowSessionExpired(true)
     } else if (isAuthError && !authState.isAuthenticated) {
-      console.log('Authentication error for non-authenticated user, redirecting to login')
-      // For non-authenticated users, just redirect to login
       router.push('/login')
     }
   }
@@ -128,7 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       try {
         const session = authService.getSession()
-        console.log('Initial auth session:', session)
         
         if (session?.token && session?.user) {
           // Fetch complete user profile
@@ -136,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const profileResponse = await authService.authenticatedFetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/users/profile`)
             if (profileResponse.ok) {
               const profileData = await profileResponse.json()
-              console.log('Profile data fetched on init:', profileData)
               
               setAuthState({
                 isAuthenticated: true,
@@ -186,14 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password)
-      console.log('Login successful:', response)
       
       // Fetch complete user profile after login
       try {
         const profileResponse = await authService.authenticatedFetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/users/profile`)
         if (profileResponse.ok) {
           const profileData = await profileResponse.json()
-          console.log('Profile data fetched:', profileData)
           
           setAuthState({
             isAuthenticated: true,
@@ -245,7 +210,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (email: string, password: string, name: string) => {
     try {
       const response = await authService.register(email, password, name)
-      console.log('Registration successful:', response)
       
       setAuthState({
         isAuthenticated: true,
@@ -377,7 +341,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authService.authenticatedFetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/users/profile`)
       if (response.ok) {
         const profileData = await response.json()
-        console.log('Profile data refreshed:', profileData)
         
         const updatedUser = {
           ...session.user,
@@ -401,7 +364,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           authLoading: false
         }))
         
-        console.log('Auth state updated with verification status:', updatedUser.isEmailVerified)
       } else {
         console.error('Failed to refresh user profile')
         setAuthState(prev => ({
@@ -420,15 +382,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Method to update verification status after email verification
   const updateEmailVerificationStatus = (isVerified: boolean) => {
-    console.group('🔍 Updating Email Verification Status');
-    console.log('Current Auth State Before Update:', {
-      isAuthenticated: authState.isAuthenticated,
-      user: authState.user ? {
-        email: authState.user.email,
-        isEmailVerified: authState.user.isEmailVerified
-      } : null
-    });
-
+    
     setAuthState(prevState => {
       const updatedState = {
         ...prevState,
@@ -438,20 +392,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } : null
       };
 
-      console.log('Updated Auth State:', {
-        isAuthenticated: updatedState.isAuthenticated,
-        user: updatedState.user ? {
-          email: updatedState.user.email,
-          isEmailVerified: updatedState.user.isEmailVerified
-        } : null
-      });
-
-      console.groupEnd();
       return updatedState;
     });
   };
-
-  console.log('Auth State Debug:', authState)
 
   return (
     <AuthContext.Provider
