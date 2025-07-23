@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useState, useEffect } from "react";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

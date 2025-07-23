@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { motion } from 'framer-motion';
 import { Users, FileText, CheckCircle, XCircle, UserCheck, Code, MessageSquare, ArrowRight, ChevronDown, Clock, BarChart, Plus, ArrowUp, ArrowDown, TrendingUp, Briefcase, Target, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';

@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import DataTable from "@/components/admin/DataTable";

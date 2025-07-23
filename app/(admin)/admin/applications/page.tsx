@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useState, useEffect } from "react";
 import { ApplicationsTable } from "./ApplicationsTable";
 import { EditApplicationModal } from "@/components/admin/EditApplicationModal";
