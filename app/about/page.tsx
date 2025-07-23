@@ -71,7 +71,7 @@ const team = [
   },
   {
     name: "Lovell Oduor",
-    role: "Configuration Analyst",
+    role: "Junior Configuration Analyst",
  
     image: "/Teams/Lovell.jpg",
     social: {
@@ -81,7 +81,7 @@ const team = [
   },
   {
     name: "Geoffrey Audia",
-    role: "Configuration Analyst",
+    role: "Junior Configuration Analyst",
     image: "/Teams/Geo1.jpg",
     social: {
     
@@ -90,7 +90,7 @@ const team = [
   },
   {
     name: "Ian Mosonik",
-    role: "Configuration Analyst",
+    role: "Junior Configuration Analyst",
     image: "/Teams/Ian 1.jpg",
     social: {
       linkedin: "https://www.linkedin.com/in/ian-mosonik-a18089225/",
@@ -99,7 +99,7 @@ const team = [
   },
   {
     name: "Gloria Onyancha",
-    role: "Configuration Analyst",
+    role: "Trainee",
     image: "/Teams/Gloria 2.jpg",
     social: {
       linkedin: "#",
